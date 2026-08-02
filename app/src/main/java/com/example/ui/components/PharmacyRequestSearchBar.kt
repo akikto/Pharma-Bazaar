@@ -79,6 +79,7 @@ fun PharmacyRequestSearchBar(
     totalResultCount: Int = -1,
     onScanBarcodeClick: (() -> Unit)? = null,
     onResetFiltersClick: (() -> Unit)? = null,
+    onOpenSearchScreenClick: (() -> Unit)? = null,
     placeholderText: String = "ওষুধের নাম, জেনেরিক বা প্রস্তুতকারক দিয়ে খুঁজুন...",
     modifier: Modifier = Modifier
 ) {
@@ -125,6 +126,22 @@ fun PharmacyRequestSearchBar(
                                 contentDescription = "Clear Search",
                                 tint = TextSecondary,
                                 modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    if (onOpenSearchScreenClick != null) {
+                        IconButton(
+                            onClick = onOpenSearchScreenClick,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .testTag("open_predictive_search_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = "Predictive Search",
+                                tint = RoyalPharmaBlue,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }

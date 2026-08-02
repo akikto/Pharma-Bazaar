@@ -269,7 +269,7 @@ fun PriceThresholdAlertSection(
                     OutlinedTextField(
                         value = inputMaxPrice,
                         onValueChange = { inputMaxPrice = it },
-                        label = { Text("সর্বোচ্চ কাক্সিক্ষত মূল্য (৳ Target Price)") },
+                        label = { Text("সর্বোচ্চ কাক্সিক্ষত মূল্য (TK Target Price)") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("threshold_price_input"),
@@ -299,7 +299,7 @@ fun PriceThresholdAlertSection(
                                 }
                             ) {
                                 Text(
-                                    text = "$med (৳${price.toInt()})",
+                                    text = "$med (TK ${price.toInt()})",
                                     fontSize = 11.sp,
                                     color = RoyalPharmaBlue,
                                     fontWeight = FontWeight.Medium,
@@ -439,13 +439,13 @@ fun PriceThresholdAlertSection(
                             ) {
                                 Column {
                                     Text(
-                                        text = "অফার মূল্য: ৳${trigger.offerPrice.toInt()}",
+                                        text = "অফার মূল্য: TK ${trigger.offerPrice.toInt()}",
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = EmeraldGreen
                                     )
                                     Text(
-                                        text = "আপনার সীমা ছিল: ৳${trigger.targetThresholdPrice.toInt()}",
+                                        text = "আপনার সীমা ছিল: TK ${trigger.targetThresholdPrice.toInt()}",
                                         fontSize = 11.sp,
                                         color = TextSecondary
                                     )
@@ -458,7 +458,7 @@ fun PriceThresholdAlertSection(
                                 ) {
                                     val savings = trigger.targetThresholdPrice - trigger.offerPrice
                                     Text(
-                                        text = if (savings > 0) "সাশ্রয়: ৳${savings.toInt()}/প্যাক 🔥" else "টার্গেট প্রাইসে পাওয়া গেছে!",
+                                        text = if (savings > 0) "সাশ্রয়: TK ${savings.toInt()}/প্যাক 🔥" else "টার্গেট প্রাইসে পাওয়া গেছে!",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = EmeraldGreen,
@@ -611,7 +611,7 @@ fun PriceThresholdAlertSection(
                                         color = TextPrimary
                                     )
                                     Text(
-                                        text = "সর্বোচ্চ টার্গেট মূল্য: ৳${threshold.maxPriceThreshold.toInt()}",
+                                        text = "সর্বোচ্চ টার্গেট মূল্য: TK ${threshold.maxPriceThreshold.toInt()}",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = RoyalPharmaBlue

@@ -16,7 +16,7 @@ import java.util.Locale
 data class InventoryExportSummary(
     val totalItems: Int,
     val totalBoxes: Int,
-    val totalStockValueBdt: Double,
+    val totalStockValueInr: Double,
     val activeCount: Int,
     val pausedCount: Int,
     val soldOutCount: Int,
@@ -43,8 +43,8 @@ object InventoryCsvExportUtil {
             "Expiry Date",
             "Available Quantity (Boxes)",
             "Min Order Quantity",
-            "Offer Price (BDT)",
-            "MRP (BDT)",
+            "Offer Price (INR)",
+            "MRP (INR)",
             "Discount %",
             "Status",
             "Seller Shop Name",
@@ -152,7 +152,7 @@ object InventoryCsvExportUtil {
             return InventoryExportSummary(
                 totalItems = offers.size,
                 totalBoxes = totalBoxes,
-                totalStockValueBdt = totalValue,
+                totalStockValueInr = totalValue,
                 activeCount = activeCount,
                 pausedCount = pausedCount,
                 soldOutCount = soldOutCount,

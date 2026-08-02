@@ -60,7 +60,7 @@ fun MultiSellerComparisonCard(
     val minDistance = offers.minOf { it.sellerDistanceKm }
     val offerCount = offers.size
 
-    val priceString = if (minPrice == maxPrice) "৳$minPrice/বক্স" else "৳$minPrice - ৳$maxPrice/বক্স"
+    val priceString = if (minPrice == maxPrice) "₹$minPrice/বক্স" else "₹$minPrice - ₹$maxPrice/বক্স"
 
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

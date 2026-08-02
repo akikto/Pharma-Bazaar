@@ -269,7 +269,7 @@ fun MedicineOfferCard(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = "MRP: ৳${offer.mrp.toInt()}",
+                            text = "MRP: TK ${offer.mrp.toInt()}",
                             fontSize = 12.sp,
                             color = TextSecondary,
                             textDecoration = TextDecoration.LineThrough,
@@ -284,7 +284,7 @@ fun MedicineOfferCard(
                             modifier = Modifier.padding(bottom = 3.dp, end = 2.dp)
                         )
                         Text(
-                            text = "৳${offer.offerPrice.toInt()}",
+                            text = "TK ${offer.offerPrice.toInt()}",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Black,
                             color = EmeraldGreen

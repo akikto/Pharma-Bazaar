@@ -50,6 +50,7 @@ import com.example.ui.screens.CartScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.InAppChatScreen
 import com.example.ui.screens.MultiSellerComparisonScreen
+import com.example.ui.screens.SearchScreen
 import com.example.ui.screens.SellerAuthScreen
 import com.example.ui.screens.SellerDashboardScreen
 import com.example.ui.screens.ShopProfileScreen
@@ -128,6 +129,8 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
   val watchlistItems by viewModel.watchlistItems.collectAsStateWithLifecycle()
   val watchlistedMedicineNames by viewModel.watchlistedMedicineNames.collectAsStateWithLifecycle()
   val showWatchlistScreen by viewModel.showWatchlistScreen.collectAsStateWithLifecycle()
+  val showSearchScreen by viewModel.showSearchScreen.collectAsStateWithLifecycle()
+  val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
   val thresholdAlerts by viewModel.priceThresholdAlerts.collectAsStateWithLifecycle()
   val triggeredAlerts by viewModel.triggeredPriceAlerts.collectAsStateWithLifecycle()
 
@@ -288,6 +291,26 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
           onAddToCart = { offer, qty -> viewModel.addToCart(offer, qty) },
           onSimulateOffer = { med, price, seller -> viewModel.simulateSupplierLowPriceOffer(med, price, seller) }
         )
+      } else if (showSearchScreen) {
+        SearchScreen(
+          searchQuery = searchQuery,
+          onSearchQueryChange = { viewModel.setSearchQuery(it) },
+          selectedCategory = selectedCategory,
+          onCategorySelected = { viewModel.setSelectedCategory(it) },
+          offersList = filteredOffers,
+          masterMedicines = masterMedicines,
+          recentSearches = recentSearches,
+          onAddRecentSearch = { q -> viewModel.addRecentSearch(q) },
+          onClearRecentSearches = { viewModel.clearRecentSearches() },
+          watchlistedNames = watchlistedMedicineNames,
+          onToggleWatchlist = { name, gen, comp, form -> viewModel.toggleWatchlist(name, gen, comp, form) },
+          onAddToCart = { offer -> viewModel.addToCart(offer, 1) },
+          onCompareClick = { medName ->
+            viewModel.closeSearchScreen()
+            viewModel.openComparison(medName)
+          },
+          onBackClick = { viewModel.closeSearchScreen() }
+        )
       } else if (comparisonMedicineName != null) {
         MultiSellerComparisonScreen(
           medicineFullName = comparisonMedicineName!!,
@@ -329,6 +352,7 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
               viewModel.toggleWatchlist(med, gen, comp, form)
             },
             onOpenWatchlistClick = { viewModel.openWatchlistScreen() },
+            onOpenSearchScreenClick = { viewModel.openSearchScreen() },
             onBuyRequestClick = { offer -> viewModel.showBuyRequestDialog(offer) },
             onChatClick = { offer ->
               // Open or create chat

@@ -1,20 +1,8 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- White Circle background badge -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,20A34,34 0 1,1 53.999,20Z" />
-    <!-- Medical Cross & Pill symbol in Emerald & Royal Blue -->
-    <path
-        android:fillColor="#10B981"
-        android:pathData="M49,36h10v36h-10z" />
-    <path
-        android:fillColor="#10B981"
-        android:pathData="M36,49h36v10h-36z" />
-    <path
-        android:fillColor="#0D6EFD"
-        android:pathData="M47,47h14v14h-14z" />
-</vector>
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="66dp"
+        android:height="66dp"
+        android:drawable="@drawable/ic_pharma_logo"
+        android:gravity="center" />
+</layer-list>

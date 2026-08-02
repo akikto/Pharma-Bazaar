@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import androidx.compose.ui.res.painterResource
+import com.example.R
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -111,6 +114,7 @@ fun HomeScreen(
     watchlistedNames: Set<String> = emptySet(),
     onToggleWatchlist: ((String, String, String, String) -> Unit)? = null,
     onOpenWatchlistClick: () -> Unit = {},
+    onOpenSearchScreenClick: () -> Unit = {},
     onBuyRequestClick: (OfferListingEntity) -> Unit,
     onChatClick: (OfferListingEntity) -> Unit,
     onCompareClick: (medicineFullName: String) -> Unit,
@@ -151,20 +155,17 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Avatar Store Icon Box
+                        // Avatar Store & App Logo Box
                         Surface(
                             shape = CircleShape,
-                            color = RoyalPharmaBlue,
-                            modifier = Modifier.size(40.dp)
+                            color = Color.Transparent,
+                            modifier = Modifier.size(42.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Storefront,
-                                    contentDescription = "Shop Logo",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_pharma_logo),
+                                contentDescription = "Pharma-Exchange Logo",
+                                modifier = Modifier.size(42.dp)
+                            )
                         }
 
                         Column {
@@ -183,12 +184,27 @@ fun HomeScreen(
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
-                            Text(
-                                text = "${activeShop.area}, Dhaka",
-                                color = TextSecondary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "${activeShop.area}, India",
+                                    color = TextSecondary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Surface(
+                                    color = Color(0xFFFF9933).copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Text(
+                                        text = "🇮🇳 Made in India",
+                                        color = Color(0xFFD97706),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -252,6 +268,7 @@ fun HomeScreen(
                     onCategorySelected = onCategorySelected,
                     totalResultCount = offersList.size,
                     onScanBarcodeClick = { /* Barcode scanner callback */ },
+                    onOpenSearchScreenClick = onOpenSearchScreenClick,
                     onResetFiltersClick = {
                         onSearchQueryChange("")
                         onCategorySelected("ALL")

@@ -485,14 +485,14 @@ fun WatchlistItemCard(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
-                                    text = if (minOfferPrice > 0) "৳${minOfferPrice.toInt()}/বক্স" else "উপলব্ধ নয়",
+                                    text = if (minOfferPrice > 0) "₹${minOfferPrice.toInt()}/বক্স" else "উপলব্ধ নয়",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = EmeraldGreen
                                 )
                                 if (minMrp > minOfferPrice && minOfferPrice > 0) {
                                     Text(
-                                        text = "MRP ৳${minMrp.toInt()}",
+                                        text = "MRP ₹${minMrp.toInt()}",
                                         fontSize = 11.sp,
                                         color = TextSecondary,
                                         textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
@@ -509,7 +509,7 @@ fun WatchlistItemCard(
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = if (minOfferPrice > 0) "৳${minOfferPrice.toInt()} — ৳${maxOfferPrice.toInt()}" else "-",
+                                text = if (minOfferPrice > 0) "₹${minOfferPrice.toInt()} — ₹${maxOfferPrice.toInt()}" else "-",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary

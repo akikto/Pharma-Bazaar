@@ -252,7 +252,7 @@ fun MedicinePriceTrendVisualizer(
             ) {
                 MetricSummaryChip(
                     title = "সর্বনিম্ন দাম",
-                    value = "৳${minPrice.toInt()}",
+                    value = "₹${minPrice.toInt()}",
                     color = EmeraldGreen,
                     bgColor = EmeraldGreenLight,
                     icon = Icons.Outlined.TrendingDown,
@@ -260,7 +260,7 @@ fun MedicinePriceTrendVisualizer(
                 )
                 MetricSummaryChip(
                     title = "গড় পাইকারি",
-                    value = "৳${avgPrice.toInt()}",
+                    value = "₹${avgPrice.toInt()}",
                     color = RoyalPharmaBlue,
                     bgColor = PharmaBlueLight,
                     icon = Icons.Outlined.ShowChart,
@@ -268,7 +268,7 @@ fun MedicinePriceTrendVisualizer(
                 )
                 MetricSummaryChip(
                     title = "এমআরপি (MRP)",
-                    value = "৳${mrp.toInt()}",
+                    value = "₹${mrp.toInt()}",
                     color = UrgentRed,
                     bgColor = UrgentRedLight,
                     icon = Icons.Outlined.TrendingUp,
@@ -486,13 +486,13 @@ fun MedicinePriceTrendVisualizer(
                                 color = Color.White.copy(alpha = 0.5f)
                             )
                             Text(
-                                text = "অফার: ৳${activePoint.offerPrice.toInt()}",
+                                text = "অফার: ₹${activePoint.offerPrice.toInt()}",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF86EFAC)
                             )
                             Text(
-                                text = "(MRP: ৳${activePoint.mrp.toInt()})",
+                                text = "(MRP: ₹${activePoint.mrp.toInt()})",
                                 fontSize = 10.sp,
                                 color = Color.White.copy(alpha = 0.8f)
                             )
@@ -534,7 +534,7 @@ fun MedicinePriceTrendVisualizer(
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = if (trendVsAvg <= 0)
-                                "বর্তমান পাইকারি মূল্য (৳${currentOfferPrice.toInt()}) গত $selectedTimeRange-এর গড় দামের চেয়ে ${Math.abs(trendVsAvg).toInt()}% কম (MRP থেকে $priceSavingsPct% ছাড়)! এখন ফার্মেসির জন্য মজুদ করা লাভজনক।"
+                                "বর্তমান পাইকারি মূল্য (₹${currentOfferPrice.toInt()}) গত $selectedTimeRange-এর গড় দামের চেয়ে ${Math.abs(trendVsAvg).toInt()}% কম (MRP থেকে $priceSavingsPct% ছাড়)! এখন ফার্মেসির জন্য মজুদ করা লাভজনক।"
                             else
                                 "বর্তমান পাইকারি মূল্য গত সময়ের গড়ের চেয়ে কিছুটা বেশি। জরুরী প্রয়োজন ব্যতীত পরিমাণ সীমিত রাখা বিবেচনা করুন।",
                             fontSize = 11.sp,

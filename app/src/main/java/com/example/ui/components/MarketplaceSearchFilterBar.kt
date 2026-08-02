@@ -346,7 +346,7 @@ fun MarketplaceFilterDialog(
                         color = RoyalPharmaBlue
                     )
                     Text(
-                        text = if (tempMaxPrice >= 10000.0) "সব দাম" else "৳${tempMaxPrice.toInt()} পর্যন্ত",
+                        text = if (tempMaxPrice >= 10000.0) "সব দাম" else "₹${tempMaxPrice.toInt()} পর্যন্ত",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = EmeraldGreen
@@ -373,9 +373,9 @@ fun MarketplaceFilterDialog(
                 ) {
                     listOf(
                         "সব দাম" to 10000.0,
-                        "৳২০০" to 200.0,
-                        "৳৫০০" to 500.0,
-                        "৳১০০০" to 1000.0
+                        "₹২০০" to 200.0,
+                        "₹৫০০" to 500.0,
+                        "₹১০০০" to 1000.0
                     ).forEach { (label, priceVal) ->
                         val isSel = (priceVal == tempMaxPrice)
                         Surface(

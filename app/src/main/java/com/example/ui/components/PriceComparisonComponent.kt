@@ -201,7 +201,7 @@ fun PriceComparisonComponent(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "সর্বোচ্চ ৳$maxSavings সাশ্রয়",
+                                    text = "সর্বোচ্চ TK $maxSavings সাশ্রয়",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = EmeraldGreen
@@ -223,7 +223,7 @@ fun PriceComparisonComponent(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "সর্বনিম্ন মূল্য", fontSize = 10.sp, color = TextSecondary)
-                        Text(text = "৳$minPrice", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = EmeraldGreen)
+                        Text(text = "TK $minPrice", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = EmeraldGreen)
                     }
                     Box(
                         modifier = Modifier
@@ -233,7 +233,7 @@ fun PriceComparisonComponent(
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "গড় মূল্য", fontSize = 10.sp, color = TextSecondary)
-                        Text(text = "৳$avgPrice", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = RoyalPharmaBlue)
+                        Text(text = "TK $avgPrice", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = RoyalPharmaBlue)
                     }
                     Box(
                         modifier = Modifier
@@ -243,7 +243,7 @@ fun PriceComparisonComponent(
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "সর্বোচ্চ মূল্য", fontSize = 10.sp, color = TextSecondary)
-                        Text(text = "৳$maxPrice", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text(text = "TK $maxPrice", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                     }
                 }
 
@@ -533,7 +533,7 @@ fun PriceComparisonOfferCard(
                     Text(text = "অফার মূল্য:", fontSize = 10.sp, color = TextSecondary)
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            text = "৳${offer.offerPrice.toInt()}",
+                            text = "TK ${offer.offerPrice.toInt()}",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = EmeraldGreen
@@ -546,7 +546,7 @@ fun PriceComparisonOfferCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "৳${offer.mrp.toInt()}",
+                            text = "TK ${offer.mrp.toInt()}",
                             fontSize = 13.sp,
                             color = TextSecondary,
                             textDecoration = TextDecoration.LineThrough,

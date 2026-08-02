@@ -120,10 +120,10 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
             id = 1,
             shopName = "সেবা ফার্মেসী",
             ownerName = "মোঃ রফিকুল ইসলাম",
-            licenseNumber = "DL-MIR-2024-884",
-            phone = "01711223344",
-            address = "মিরপুর-১০ গোলচত্বর, ঢাকা",
-            area = "মিরপুর, ঢাকা",
+            licenseNumber = "GSTIN-27MH2024-884",
+            phone = "+91 98765 43210",
+            address = "আন্ধেরি ইস্ট, মুম্বাই, মহারাষ্ট্র",
+            area = "আন্ধেরি, মুম্বাই",
             rating = 4.9,
             totalDealsCompleted = 142,
             isVerified = true
@@ -149,6 +149,68 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _showWatchlistScreen = MutableStateFlow(false)
     val showWatchlistScreen: StateFlow<Boolean> = _showWatchlistScreen.asStateFlow()
+
+    private val _showSearchScreen = MutableStateFlow(false)
+    val showSearchScreen: StateFlow<Boolean> = _showSearchScreen.asStateFlow()
+
+    private val _showFirestoreProductsScreen = MutableStateFlow(false)
+    val showFirestoreProductsScreen: StateFlow<Boolean> = _showFirestoreProductsScreen.asStateFlow()
+
+    private val _firestoreProducts = MutableStateFlow<List<OfferListingEntity>>(emptyList())
+    val firestoreProducts: StateFlow<List<OfferListingEntity>> = _firestoreProducts.asStateFlow()
+
+    private val _isFirestoreLoading = MutableStateFlow(false)
+    val isFirestoreLoading: StateFlow<Boolean> = _isFirestoreLoading.asStateFlow()
+
+    private val _firestoreSearchQuery = MutableStateFlow("")
+    val firestoreSearchQuery: StateFlow<String> = _firestoreSearchQuery.asStateFlow()
+
+    private val _firestoreSortOption = MutableStateFlow("PRICE_LOW_HIGH")
+    val firestoreSortOption: StateFlow<String> = _firestoreSortOption.asStateFlow()
+
+    private val _firestoreCategoryFilter = MutableStateFlow("ALL")
+    val firestoreCategoryFilter: StateFlow<String> = _firestoreCategoryFilter.asStateFlow()
+
+    val filteredFirestoreProducts: StateFlow<List<OfferListingEntity>> = combine(
+        _firestoreProducts,
+        _firestoreSearchQuery,
+        _firestoreSortOption,
+        _firestoreCategoryFilter
+    ) { products, query, sort, category ->
+        var list = products
+
+        if (query.isNotBlank()) {
+            val q = query.trim().lowercase()
+            list = list.filter {
+                it.medicineName.lowercase().contains(q) ||
+                it.genericName.lowercase().contains(q) ||
+                it.companyName.lowercase().contains(q) ||
+                it.sellerShopName.lowercase().contains(q)
+            }
+        }
+
+        when (category) {
+            "VERIFIED" -> list = list.filter { it.isVerifiedShop }
+            "IN_STOCK" -> list = list.filter { it.availableQuantity > 0 }
+            "TABLETS" -> list = list.filter { it.form.equals("Tablet", ignoreCase = true) || it.form.equals("Capsule", ignoreCase = true) }
+            "SYRUPS" -> list = list.filter { it.form.contains("Syrup", ignoreCase = true) || it.form.contains("Liquid", ignoreCase = true) }
+            "INJECTIONS" -> list = list.filter { it.form.contains("Injection", ignoreCase = true) || it.form.contains("IV", ignoreCase = true) }
+        }
+
+        when (sort) {
+            "PRICE_LOW_HIGH" -> list.sortedBy { it.offerPrice }
+            "PRICE_HIGH_LOW" -> list.sortedByDescending { it.offerPrice }
+            "POPULARITY" -> list.sortedByDescending { it.sellerRating }
+            "DISCOUNT" -> list.sortedByDescending { it.discountPercent }
+            "FASTEST_DELIVERY" -> list.sortedBy { it.sellerDistanceKm }
+            else -> list.sortedBy { it.offerPrice }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _recentSearches = MutableStateFlow<List<String>>(
+        listOf("Napa Extra", "Sergel 20", "Omeprazole", "Montelukast", "Square Pharmaceuticals")
+    )
+    val recentSearches: StateFlow<List<String>> = _recentSearches.asStateFlow()
 
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
@@ -215,6 +277,42 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
             repository.seedSampleDataIfEmpty()
             repository.syncAllWithFirestore()
             loadGeminiAiSuggestions()
+            loadFirestoreProducts()
+        }
+    }
+
+    fun openFirestoreProductsScreen() {
+        _showFirestoreProductsScreen.value = true
+        loadFirestoreProducts()
+    }
+
+    fun closeFirestoreProductsScreen() {
+        _showFirestoreProductsScreen.value = false
+    }
+
+    fun setFirestoreSearchQuery(query: String) {
+        _firestoreSearchQuery.value = query
+    }
+
+    fun setFirestoreSortOption(option: String) {
+        _firestoreSortOption.value = option
+    }
+
+    fun setFirestoreCategoryFilter(category: String) {
+        _firestoreCategoryFilter.value = category
+    }
+
+    fun loadFirestoreProducts() {
+        viewModelScope.launch {
+            _isFirestoreLoading.value = true
+            try {
+                val products = repository.getFirestoreProducts()
+                _firestoreProducts.value = products
+            } catch (e: Exception) {
+                _firestoreProducts.value = emptyList()
+            } finally {
+                _isFirestoreLoading.value = false
+            }
         }
     }
 
@@ -793,7 +891,7 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
             }
             val summary = InventoryCsvExportUtil.exportAndShareInventoryCsv(context, offers, shopName)
             if (summary != null) {
-                showSnackbar("📊 ${summary.totalItems} টি পণ্যের সিএসভি ফাইল সফলভাবে এক্সপোর্ট করা হয়েছে! (মোট স্টক মূল্য: ৳${summary.totalStockValueBdt.toInt()})")
+                showSnackbar("📊 ${summary.totalItems} টি পণ্যের সিএসভি ফাইল সফলভাবে এক্সপোর্ট করা হয়েছে! (মোট স্টক মূল্য: ₹${summary.totalStockValueInr.toInt()})")
             } else {
                 showSnackbar("❌ সিএসভি ফাইল এক্সপোর্টে সমস্যা হয়েছে।")
             }
@@ -1089,12 +1187,32 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         _showWatchlistScreen.value = false
     }
 
+    fun openSearchScreen() {
+        _showSearchScreen.value = true
+    }
+
+    fun closeSearchScreen() {
+        _showSearchScreen.value = false
+    }
+
+    fun addRecentSearch(query: String) {
+        if (query.isBlank()) return
+        val current = _recentSearches.value.toMutableList()
+        current.remove(query)
+        current.add(0, query)
+        _recentSearches.value = current.take(8)
+    }
+
+    fun clearRecentSearches() {
+        _recentSearches.value = emptyList()
+    }
+
     // Price Threshold & Automated Alert Actions
     fun addPriceThresholdAlert(medicineName: String, genericName: String = "", maxPriceThreshold: Double) {
         if (medicineName.isBlank() || maxPriceThreshold <= 0) return
         viewModelScope.launch {
             repository.addPriceThresholdAlert(medicineName, genericName, maxPriceThreshold)
-            showSnackbar("🎯 $medicineName - ৳${maxPriceThreshold.toInt()} এর মূল্য সীমা সেট করা হয়েছে!")
+            showSnackbar("🎯 $medicineName - ₹${maxPriceThreshold.toInt()} এর মূল্য সীমা সেট করা হয়েছে!")
         }
     }
 
@@ -1139,14 +1257,14 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 minimumOrderQuantity = 5,
                 sellerShopId = 99,
                 sellerShopName = sellerName,
-                sellerLocation = "ঢাকা মিডফোর্ড মার্কেট",
+                sellerLocation = "মুম্বাই ফার্মাসিউটিক্যালস মার্কেট",
                 sellerDistanceKm = 1.1,
                 isVerifiedShop = true,
                 notes = "⚡ টেস্ট সিমুলেটেড কমদামী সপ্লায়ার অফার",
                 status = "ACTIVE"
             )
             repository.insertOffer(testOffer)
-            showSnackbar("🧪 টেস্ট সপ্লয়ার অফার পোস্ট করা হয়েছে: $medicineName @ ৳${price.toInt()}")
+            showSnackbar("🧪 টেস্ট সপ্লয়ার অফার পোস্ট করা হয়েছে: $medicineName @ ₹${price.toInt()}")
         }
     }
 

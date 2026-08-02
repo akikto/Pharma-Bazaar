@@ -100,7 +100,7 @@ fun BuyRequestDialog(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("একক অফার মূল্য:", fontSize = 12.sp, color = TextSecondary)
-                            Text("৳${offer.offerPrice.toInt()}/বক্স", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = EmeraldGreen)
+                            Text("₹${offer.offerPrice.toInt()}/বক্স", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = EmeraldGreen)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -240,7 +240,7 @@ fun BuyRequestDialog(
                 ) {
                     Text("সর্বমোট আনুমানিক মূল্য:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     Text(
-                        text = "৳${totalPrice.toInt()}",
+                        text = "₹${totalPrice.toInt()}",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = EmeraldGreen

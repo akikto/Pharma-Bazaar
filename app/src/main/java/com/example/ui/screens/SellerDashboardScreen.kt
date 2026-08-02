@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import androidx.compose.ui.res.painterResource
+import com.example.R
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -200,18 +203,43 @@ fun SellerDashboardScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
-                            Text(
-                                text = "বিক্রেতা ইনভেন্টরি ড্যাশবোর্ড",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_pharma_logo),
+                                contentDescription = "Pharma-Exchange Logo",
+                                modifier = Modifier.size(38.dp)
                             )
-                            Text(
-                                text = "${activeShop.shopName} (${activeShop.licenseNumber})",
-                                fontSize = 12.sp,
-                                color = Color.White.copy(alpha = 0.8f)
-                            )
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "বিক্রেতা ইনভেন্টরি ড্যাশবোর্ড",
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        color = Color(0xFFFF9933),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            text = "🇮🇳 Made in India",
+                                            color = Color.Black,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "${activeShop.shopName} (${activeShop.licenseNumber})",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
                         }
 
                         Surface(
@@ -521,7 +549,7 @@ fun SellerDashboardScreen(
                             color = TextPrimary
                         )
                         Text(
-                            text = "স্টক ভ্যালু: ৳${totalStockVal.toInt()}",
+                            text = "স্টক ভ্যালু: ₹${totalStockVal.toInt()}",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = EmeraldGreen
@@ -973,13 +1001,13 @@ fun SellerInventoryCard(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "৳${offer.offerPrice.toInt()}",
+                        text = "₹${offer.offerPrice.toInt()}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = EmeraldGreen
                     )
                     Text(
-                        text = " (MRP: ৳${offer.mrp.toInt()})",
+                        text = " (MRP: ₹${offer.mrp.toInt()})",
                         fontSize = 12.sp,
                         color = TextSecondary
                     )

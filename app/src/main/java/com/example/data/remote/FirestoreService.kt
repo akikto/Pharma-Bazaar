@@ -202,6 +202,51 @@ class FirestoreService {
     }
 
     /**
+     * One-time fetch of pharmaceutical inventory products from Cloud Firestore.
+     */
+    suspend fun fetchProductsFromFirestore(): List<OfferListingEntity> {
+        val db = getFirestore() ?: return emptyList()
+        return try {
+            val snapshot = db.collection(COLLECTION_INVENTORY_LISTINGS).get().await()
+            snapshot.documents.mapNotNull { doc ->
+                val data = doc.data ?: return@mapNotNull null
+                val id = (data["id"] as? Long) ?: doc.id.toLongOrNull() ?: 0L
+                OfferListingEntity(
+                    id = id,
+                    masterMedicineId = (data["masterMedicineId"] as? Long) ?: 0L,
+                    medicineName = (data["medicineName"] as? String) ?: "",
+                    genericName = (data["genericName"] as? String) ?: "",
+                    strength = (data["strength"] as? String) ?: "",
+                    companyName = (data["companyName"] as? String) ?: "",
+                    form = (data["form"] as? String) ?: "",
+                    packSize = (data["packSize"] as? String) ?: "",
+                    batchNumber = (data["batchNumber"] as? String) ?: "",
+                    expiryDate = (data["expiryDate"] as? String) ?: "",
+                    daysUntilExpiry = (data["daysUntilExpiry"] as? Long)?.toInt() ?: ((data["daysUntilExpiry"] as? Int) ?: 180),
+                    availableQuantity = (data["availableQuantity"] as? Long)?.toInt() ?: ((data["availableQuantity"] as? Int) ?: 100),
+                    mrp = (data["mrp"] as? Double) ?: ((data["mrp"] as? Long)?.toDouble() ?: 0.0),
+                    offerPrice = (data["offerPrice"] as? Double) ?: ((data["offerPrice"] as? Long)?.toDouble() ?: 0.0),
+                    discountPercent = (data["discountPercent"] as? Long)?.toInt() ?: ((data["discountPercent"] as? Int) ?: 0),
+                    minimumOrderQuantity = (data["minimumOrderQuantity"] as? Long)?.toInt() ?: ((data["minimumOrderQuantity"] as? Int) ?: 1),
+                    sellerShopId = (data["sellerShopId"] as? Long) ?: 1L,
+                    sellerShopName = (data["sellerShopName"] as? String) ?: "Pharma Supplier",
+                    sellerLocation = (data["sellerLocation"] as? String) ?: "Mumbai, India",
+                    sellerDistanceKm = (data["sellerDistanceKm"] as? Double) ?: ((data["sellerDistanceKm"] as? Long)?.toDouble() ?: 2.5),
+                    sellerRating = (data["sellerRating"] as? Double) ?: 4.8,
+                    isVerifiedShop = (data["isVerifiedShop"] as? Boolean) ?: true,
+                    notes = (data["notes"] as? String) ?: "",
+                    status = (data["status"] as? String) ?: "ACTIVE",
+                    createdAt = (data["createdAt"] as? Long) ?: System.currentTimeMillis(),
+                    updatedAt = (data["updatedAt"] as? Long) ?: System.currentTimeMillis()
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error fetching products from Firestore: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
      * Observe real-time Cloud Firestore inventory listings.
      */
     fun observeCloudInventoryListings(): Flow<List<Map<String, Any>>> = callbackFlow {

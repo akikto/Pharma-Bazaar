@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background rounded rectangle gradient simulation -->
+    <path
+        android:fillColor="#0A2540"
+        android:pathData="M20,0 h80 a20,20 0 0,1 20,20 v80 a20,20 0 0,1 -20,20 h-80 a20,20 0 0,1 -20,-20 v-80 a20,20 0 0,1 20,-20 Z" />
+
+    <!-- Medical Cross & Capsule in White -->
+    <!-- Medical Cross Stem -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,20 h22 a4,4 0 0,1 4,4 v46 a4,4 0 0,1 -4,4 h-22 a4,4 0 0,1 -4,-4 v-46 a4,4 0 0,1 4,-4 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,34 h50 a4,4 0 0,1 4,4 v18 a4,4 0 0,1 -4,4 h-50 a4,4 0 0,1 -4,-4 v-18 a4,4 0 0,1 4,-4 Z" />
+
+    <!-- Capsule Pill Diagonal inside cross -->
+    <path
+        android:fillColor="#0A2540"
+        android:pathData="M36,28 L56,48 a8,8 0 0,1 -11,11 L25,39 a8,8 0 0,1 11,-11 Z" />
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M46,38 L56,48 a8,8 0 0,1 -11,11 L35,48 Z" />
+
+    <!-- Shopping Cart with Medicine -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,60 h38 l-5,16 h-28 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,56 h6 l3,8 h33 v2 h-32 Z" />
+    <!-- Cart Wheels -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M56,80 a4,4 0 1,1 -0.001,0 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M76,80 a4,4 0 1,1 -0.001,0 Z" />
+
+    <!-- Medicine Bottles & Blister in Cart -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M58,50 h10 v10 h-10 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,46 h6 v4 h-6 Z" />
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M72,52 h12 v8 h-12 Z" />
+
+    <!-- Circular Exchange Arrows -->
+    <!-- Top-Right Down Arrow (Green) -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M65,22 C82,22 92,32 92,50 L86,44 L86,54 L96,54 L90,48 C90,32 78,20 62,20 Z" />
+
+    <!-- Bottom-Left Up Arrow (White) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,88 C26,88 20,76 20,58 L26,64 L26,54 L16,54 L22,60 C22,78 32,90 48,90 Z" />
+
+    <!-- Text: Pharma-Exchange -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14,98 h5 v2 h-3 v3 h3 v2 h-3 v4 h-2 Z M20,98 h2 v4 h3 v-4 h2 v11 h-2 v-5 h-3 v5 h-2 Z M28,103 a3,3 0 0,1 6,0 v6 h-2 v-2 a3,3 0 0,1 -4,-4 Z M35,103 a3,3 0 0,1 5,0 v6 h-2 v-5 h-1 Z M42,103 a3,3 0 0,1 5,0 v6 h-2 v-5 h-1 Z M48,103 a3,3 0 0,1 6,0 v6 h-2 v-2 a3,3 0 0,1 -4,-4 Z" />
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M56,104 h5 v2 h-5 Z M62,98 h6 v2 h-4 v2 h4 v2 h-4 v3 h4 v2 h-6 Z M70,103 l3,3 l-3,3 h2 l2,-2 l2,2 h2 l-3,-3 l3,-3 h-2 l-2,2 l-2,-2 Z M78,103 a3,3 0 0,1 6,0 v6 h-2 v-5 h-1 Z M86,103 a3,3 0 0,1 6,0 v6 h-2 v-2 a3,3 0 0,1 -4,-4 Z M94,103 h6 v2 h-4 v1 h4 v5 h-6 Z M102,103 a3,3 0 0,1 5,0 v6 h-2 v-5 h-1 Z M108,103 a3,3 0 0,1 6,0 v6 h-2 v-5 h-1 Z" />
+</vector>

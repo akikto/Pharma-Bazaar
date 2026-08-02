@@ -238,7 +238,7 @@ fun AddEditOfferDialog(
                     OutlinedTextField(
                         value = mrpText,
                         onValueChange = { mrpText = it },
-                        label = { Text("MRP (৳)") },
+                        label = { Text("MRP (₹)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp)
@@ -246,7 +246,7 @@ fun AddEditOfferDialog(
                     OutlinedTextField(
                         value = offerPriceText,
                         onValueChange = { offerPriceText = it },
-                        label = { Text("অফার মূল্য (৳)") },
+                        label = { Text("অফার মূল্য (₹)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp)

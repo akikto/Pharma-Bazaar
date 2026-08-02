@@ -136,8 +136,8 @@ object GeminiSuggestionService {
                 "matchedOfferListingId": 101,
                 "medicineName": "Napa Extra 500mg",
                 "genericName": "Paracetamol + Caffeine",
-                "sellerShopName": "Beximco Distributor HQ",
-                "sellerLocation": "Dhaka",
+                "sellerShopName": "Sun Pharma Distributor HQ",
+                "sellerLocation": "Mumbai, India",
                 "sellerDistanceKm": 3.2,
                 "matchScorePercent": 96,
                 "matchCategory": "Analgesic & Antipyretic",
@@ -149,7 +149,7 @@ object GeminiSuggestionService {
                   "অনুরোধকৃত ৫০ বক্সে ২০০ বক্সই স্টকে আছে",
                   "এমআরপি থেকে ১৫% অতিরিক্ত ছাড়"
                 ],
-                "recommendationSummary": "বেক্সিমকো ডিস্ট্রিবিউটর থেকে ২.১০ ৳ মূল্যে দ্রুত ডেলিভারিতে পাবেন।"
+                "recommendationSummary": "সান ফার্মা ডিস্ট্রিবিউটর থেকে ২.১০ ₹ মূল্যে দ্রুত ডেলিভারিতে পাবেন।"
               }
             ]
         """.trimIndent()
@@ -300,7 +300,7 @@ object GeminiSuggestionService {
 
                 reasons.add("${bestOffer.sellerLocation} এলাকা থেকে অতি দ্রুত ২৪ ঘণ্টার ডেলিভারি")
 
-                val summary = "${bestOffer.sellerShopName} এ ৳${bestOffer.offerPrice} মূল্যে এভেলেবল। ${reasons.first()}"
+                val summary = "${bestOffer.sellerShopName} এ ₹${bestOffer.offerPrice} মূল্যে এভেলেবল। ${reasons.first()}"
 
                 matches.add(
                     AiMatchSuggestion(

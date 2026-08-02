@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ConfirmationNumber
@@ -127,11 +128,17 @@ fun OrderShipmentStatusStepper(
     currentStatus: String,
     onUpdateStatus: ((String) -> Unit)? = null,
     isSupplierView: Boolean = false,
+    orderId: Long = 1001L,
+    medicineName: String = "Sergel 20 mg",
+    supplierName: String = "সান ফার্মা সেন্ট্রাল ডিপো",
+    pharmacyName: String = "আন্ধেরি মেডিপ্লাস ফার্মেসী",
+    orderTimestamp: Long = System.currentTimeMillis(),
     modifier: Modifier = Modifier
 ) {
     val currentStep = OrderShipmentStep.fromStatusCode(currentStatus)
     val isCancelled = currentStatus.equals("REJECTED", ignoreCase = true) || currentStatus.equals("CANCELLED", ignoreCase = true)
     var showDetailTimeline by remember { mutableStateOf(true) }
+    var showLiveMapTracker by remember { mutableStateOf(false) }
 
     // Stepper Animation Drivers
     val infiniteTransition = rememberInfiniteTransition(label = "stepperAnimations")
@@ -450,6 +457,57 @@ fun OrderShipmentStatusStepper(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Button to toggle Live GPS Route Map & Delivery ETA Tracker
+            Button(
+                onClick = { showLiveMapTracker = !showLiveMapTracker },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (showLiveMapTracker) RoyalPharmaBlue else Color(0xFFEFF6FF),
+                    contentColor = if (showLiveMapTracker) Color.White else RoyalPharmaBlue
+                ),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, RoyalPharmaBlue),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("toggle_live_map_tracker_btn")
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Map,
+                        contentDescription = "Live Map",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (showLiveMapTracker) "🗺️ লাইভ জিপিএস রুট ম্যাপ লুকান" else "🗺️ লাইভ ম্যাপ ট্র্যাকিং ও আনুমানিক ডেলিভারি সময় (ETA) দেখুন",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            AnimatedVisibility(visible = showLiveMapTracker) {
+                Column(modifier = Modifier.padding(top = 10.dp)) {
+                    PharmacyShipmentMapTrackerComponent(
+                        trackingInfo = ShipmentTrackingInfo(
+                            trackingId = "TRK-$orderId",
+                            orderId = orderId,
+                            medicineName = medicineName,
+                            supplierName = supplierName,
+                            warehouseAddress = "সেন্ট্রাল লজিস্টিকস হাব, আন্ধেরি ইস্ট, মুম্বাই",
+                            pharmacyName = pharmacyName,
+                            deliveryAddress = "লিঙ্কিং রোড, বান্দ্রা, মুম্বাই",
+                            currentStatus = currentStatus,
+                            orderTimestamp = orderTimestamp
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Toggle Expandable Timeline Details
             TextButton(
                 onClick = { showDetailTimeline = !showDetailTimeline },
@@ -619,7 +677,7 @@ fun OrderDetailsTrackingDialog(
                             Text("ফার্মেসী: ${order.buyerShopName} | সাপ্লায়ার: ${order.sellerShopName}", fontSize = 11.sp, color = TextSecondary)
                         }
                         Text(
-                            text = "৳${order.totalPrice.toInt()}",
+                            text = "₹${order.totalPrice.toInt()}",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = EmeraldGreen
@@ -629,11 +687,16 @@ fun OrderDetailsTrackingDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Visual Progress Stepper
+                // Visual Progress Stepper & Live Map Tracker
                 OrderShipmentStatusStepper(
                     currentStatus = order.status,
                     onUpdateStatus = onUpdateStatus,
-                    isSupplierView = isSupplierView
+                    isSupplierView = isSupplierView,
+                    orderId = order.id,
+                    medicineName = order.medicineName,
+                    supplierName = if (order.sellerShopName.isNotBlank()) order.sellerShopName else "সাপ্লায়ার সেন্ট্রাল ডিপো",
+                    pharmacyName = if (order.buyerShopName.isNotBlank()) order.buyerShopName else "ফার্মেসী স্টোর",
+                    orderTimestamp = order.timestamp
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))

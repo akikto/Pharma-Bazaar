@@ -274,7 +274,7 @@ fun OrderHistoryScreen(
                 ) {
                     Text("মোট লেনদেন ভ্যালু", fontSize = 11.sp, color = TextSecondary)
                     Text(
-                        text = "৳${totalVolumeBdt.toInt()}",
+                        text = "₹${totalVolumeBdt.toInt()}",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = EmeraldGreen
@@ -437,7 +437,7 @@ fun OrderHistoryScreen(
                         "অর্ডার আইডি: #BUY-${req.id}\n" +
                         "ওষুধ: ${req.medicineName}\n" +
                         "পরিমাণ: ${req.requestedQuantity} বক্স\n" +
-                        "মোট বিল: ৳${req.totalPrice.toInt()}\n" +
+                        "মোট বিল: ₹${req.totalPrice.toInt()}\n" +
                         "ফার্মেসী: ${req.buyerShopName}\n" +
                         "সাপ্লায়ার: ${req.sellerShopName}\n" +
                         "স্ট্যাটাস: ${req.status}\n" +
@@ -588,12 +588,12 @@ fun OrderHistoryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "পরিমাণ: ${order.requestedQuantity} বক্স × ৳${order.unitPrice.toInt()}",
+                    text = "পরিমাণ: ${order.requestedQuantity} বক্স × ₹${order.unitPrice.toInt()}",
                     fontSize = 13.sp,
                     color = TextSecondary
                 )
                 Text(
-                    text = "মোট: ৳${order.totalPrice.toInt()}",
+                    text = "মোট: ₹${order.totalPrice.toInt()}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = EmeraldGreen
@@ -706,7 +706,12 @@ fun OrderHistoryCard(
                     OrderShipmentStatusStepper(
                         currentStatus = order.status,
                         onUpdateStatus = { newStatus -> onUpdateStatus(newStatus) },
-                        isSupplierView = isSupplierView
+                        isSupplierView = isSupplierView,
+                        orderId = order.id,
+                        medicineName = order.medicineName,
+                        supplierName = if (order.sellerShopName.isNotBlank()) order.sellerShopName else "সাপ্লায়ার সেন্ট্রাল ডিপো",
+                        pharmacyName = if (order.buyerShopName.isNotBlank()) order.buyerShopName else "ফার্মেসী স্টোর",
+                        orderTimestamp = order.timestamp
                     )
                 }
             }
@@ -914,8 +919,8 @@ fun OrderReceiptModalDialog(
                 ) {
                     Text(order.medicineName, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(2f))
                     Text("${order.requestedQuantity} Box", fontSize = 11.sp, modifier = Modifier.weight(1f))
-                    Text("৳${order.unitPrice.toInt()}", fontSize = 11.sp, modifier = Modifier.weight(1f))
-                    Text("৳${order.totalPrice.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = EmeraldGreen, modifier = Modifier.weight(1f))
+                    Text("₹${order.unitPrice.toInt()}", fontSize = 11.sp, modifier = Modifier.weight(1f))
+                    Text("₹${order.totalPrice.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = EmeraldGreen, modifier = Modifier.weight(1f))
                 }
 
                 HorizontalDivider(color = Color(0xFFE2E8F0))
@@ -928,14 +933,19 @@ fun OrderReceiptModalDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("সর্বমোট প্রদেয় বিল:", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Text("৳${order.totalPrice.toInt()}", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = EmeraldGreen)
+                    Text("₹${order.totalPrice.toInt()}", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = EmeraldGreen)
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Visual Progress Stepper inside Receipt Modal
+                // Visual Progress Stepper & Live Map Tracker inside Receipt Modal
                 OrderShipmentStatusStepper(
-                    currentStatus = order.status
+                    currentStatus = order.status,
+                    orderId = order.id,
+                    medicineName = order.medicineName,
+                    supplierName = if (order.sellerShopName.isNotBlank()) order.sellerShopName else "সাপ্লায়ার সেন্ট্রাল ডিপো",
+                    pharmacyName = if (order.buyerShopName.isNotBlank()) order.buyerShopName else "ফার্মেসী স্টোর",
+                    orderTimestamp = order.timestamp
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))

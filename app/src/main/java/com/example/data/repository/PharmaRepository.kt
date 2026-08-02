@@ -371,6 +371,19 @@ class PharmaRepository(
         }
     }
 
+    suspend fun getFirestoreProducts(): List<OfferListingEntity> {
+        return try {
+            val cloudProducts = firestoreService.fetchProductsFromFirestore()
+            if (cloudProducts.isNotEmpty()) {
+                cloudProducts
+            } else {
+                pharmaDao.getAllActiveOffers().first()
+            }
+        } catch (e: Exception) {
+            pharmaDao.getAllActiveOffers().first()
+        }
+    }
+
     suspend fun sendChatMessage(requestId: Long, buyerId: Long, sellerId: Long, senderName: String, isSeller: Boolean, text: String) {
         val msg = ChatMessageEntity(
             buyRequestId = requestId,
@@ -404,10 +417,10 @@ class PharmaRepository(
 
         // 2. Seed B2B Verified Shop Profiles
         val sampleShops = listOf(
-            ShopProfileEntity(1, "সেবা ফার্মেসী", "মোঃ রফিকুল ইসলাম", "DL-MIR-2024-884", "01711223344", "মিরপুর-১০ গোলচত্বর, ঢাকা", "মিরপুর, ঢাকা", 4.9, 142, true),
-            ShopProfileEntity(2, "গ্রিন ফার্মা বাজার", "তানভীর আহমেদ", "DL-UTT-2023-112", "01819887766", "হাউস ১২, রোড ৪, সেক্টর ৭, উত্তরা", "উত্তরা, ঢাকা", 4.8, 98, true),
-            ShopProfileEntity(3, "মেডিসিন পয়েন্ট", "কে. এম. জাহিদ", "DL-DHA-2022-559", "01912334455", "ধানমন্ডি ২৭, ঢাকা", "ধানমন্ডি, ঢাকা", 4.7, 76, true),
-            ShopProfileEntity(4, "জনতা ডিসপেনসারি", "আব্দুল হাকীম", "DL-CTG-2021-304", "01552331100", "জিইসি মোড়, চট্টগ্রাম", "চট্টগ্রাম", 4.9, 210, true)
+            ShopProfileEntity(1, "সেবা ফার্মেসী", "মোঃ রফিকুল ইসলাম", "GSTIN-27MH2024-884", "+91 98765 43210", "আন্ধেরি ইস্ট, মুম্বাই, মহারাষ্ট্র", "আন্ধেরি, মুম্বাই", 4.9, 142, true),
+            ShopProfileEntity(2, "গ্রিন ফার্মা বাজার", "তানভীর আহমেদ", "GSTIN-07DEL2023-112", "+91 98123 45678", "কনট প্লেস, নতুন দিল্লি", "নতুন দিল্লি", 4.8, 98, true),
+            ShopProfileEntity(3, "মেডিসিন পয়েন্ট", "কে. এম. জাহিদ", "GSTIN-19WB2022-559", "+91 97111 22334", "পার্ক স্ট্রিট, কলকাতা, পশ্চিমবঙ্গ", "কলকাতা", 4.7, 76, true),
+            ShopProfileEntity(4, "জনতা ডিসপেনসারি", "আব্দুল হাকীম", "GSTIN-29KAR2021-304", "+91 96543 21098", "এমজি রোড, ব্যাঙ্গালোর, কর্ণাটক", "ব্যাঙ্গালোর", 4.9, 210, true)
         )
         pharmaDao.insertShops(sampleShops)
 
@@ -433,7 +446,7 @@ class PharmaRepository(
                 minimumOrderQuantity = 5,
                 sellerShopId = 1,
                 sellerShopName = "সেবা ফার্মেসী",
-                sellerLocation = "মিরপুর-১০, ঢাকা",
+                sellerLocation = "আন্ধেরি ইস্ট, মুম্বাই",
                 sellerDistanceKm = 1.2,
                 sellerRating = 4.9,
                 isVerifiedShop = true,
@@ -459,7 +472,7 @@ class PharmaRepository(
                 minimumOrderQuantity = 10,
                 sellerShopId = 2,
                 sellerShopName = "গ্রিন ফার্মা বাজার",
-                sellerLocation = "উত্তরা, ঢাকা",
+                sellerLocation = "কনট প্লেস, নতুন দিল্লি",
                 sellerDistanceKm = 4.5,
                 sellerRating = 4.8,
                 isVerifiedShop = true,
@@ -485,7 +498,7 @@ class PharmaRepository(
                 minimumOrderQuantity = 2,
                 sellerShopId = 3,
                 sellerShopName = "মেডিসিন পয়েন্ট",
-                sellerLocation = "ধানমন্ডি, ঢাকা",
+                sellerLocation = "পার্ক স্ট্রিট, কলকাতা",
                 sellerDistanceKm = 2.8,
                 sellerRating = 4.7,
                 isVerifiedShop = true,
@@ -511,7 +524,7 @@ class PharmaRepository(
                 minimumOrderQuantity = 20,
                 sellerShopId = 1,
                 sellerShopName = "সেবা ফার্মেসী",
-                sellerLocation = "মিরপুর-১০, ঢাকা",
+                sellerLocation = "আন্ধেরি ইস্ট, মুম্বাই",
                 sellerDistanceKm = 1.2,
                 sellerRating = 4.9,
                 isVerifiedShop = true,

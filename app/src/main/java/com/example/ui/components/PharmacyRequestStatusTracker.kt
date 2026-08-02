@@ -231,13 +231,13 @@ fun PharmacyRequestStatusTracker(
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "৳${request.totalPrice.toInt()}",
+                        text = "TK ${request.totalPrice.toInt()}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = RoyalPharmaBlue
                     )
                     Text(
-                        text = "একক মূল্য: ৳${request.unitPrice.toInt()}",
+                        text = "একক মূল্য: TK ${request.unitPrice.toInt()}",
                         fontSize = 11.sp,
                         color = TextSecondary
                     )

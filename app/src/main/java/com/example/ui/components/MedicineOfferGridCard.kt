@@ -176,14 +176,14 @@ fun MedicineOfferGridCard(
             ) {
                 Column {
                     Text(
-                        text = "৳${offer.offerPrice.toInt()}/বক্স",
+                        text = "TK ${offer.offerPrice.toInt()}/বক্স",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = EmeraldGreen
                     )
                     if (offer.mrp > offer.offerPrice) {
                         Text(
-                            text = "MRP ৳${offer.mrp.toInt()}",
+                            text = "MRP TK ${offer.mrp.toInt()}",
                             fontSize = 10.sp,
                             color = TextSecondary,
                             textDecoration = TextDecoration.LineThrough

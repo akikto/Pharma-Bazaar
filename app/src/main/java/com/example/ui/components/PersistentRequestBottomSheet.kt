@@ -181,7 +181,7 @@ fun PersistentRequestBottomSheet(
                             ) {
                                 if (cartItems.isNotEmpty()) {
                                     Text(
-                                        text = "আনুমানিক মোট: ৳${cartTotalPrice.toInt()}",
+                                        text = "আনুমানিক মোট: TK ${cartTotalPrice.toInt()}",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = Color.White.copy(alpha = 0.9f)
@@ -362,7 +362,7 @@ fun PersistentRequestBottomSheet(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "সব ভেন্ডরকে ব্যাচ রিকোয়েস্ট পাঠান (৳${cartTotalPrice.toInt()})",
+                                        text = "সব ভেন্ডরকে ব্যাচ রিকোয়েস্ট পাঠান (TK ${cartTotalPrice.toInt()})",
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -448,7 +448,7 @@ private fun CartItemSheetRow(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "৳${item.offerPrice.toInt()} × ${item.requestedQuantity} = ৳${(item.offerPrice * item.requestedQuantity).toInt()}",
+                    text = "TK ${item.offerPrice.toInt()} × ${item.requestedQuantity} = TK ${(item.offerPrice * item.requestedQuantity).toInt()}",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = EmeraldGreen
@@ -587,7 +587,7 @@ private fun PendingRequestSheetCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "পরিমাণ: ${request.requestedQuantity} বক্স • মোট: ৳${request.totalPrice.toInt()}",
+                    text = "পরিমাণ: ${request.requestedQuantity} বক্স • মোট: TK ${request.totalPrice.toInt()}",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary

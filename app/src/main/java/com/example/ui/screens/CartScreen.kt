@@ -280,12 +280,12 @@ fun CartScreen(
                                                 color = TextPrimary
                                             )
                                             Text(
-                                                text = "৳${item.offerPrice.toInt()}/বক্স (MOQ: ${item.minimumOrderQuantity} Box)",
+                                                text = "₹${item.offerPrice.toInt()}/বক্স (MOQ: ${item.minimumOrderQuantity} Box)",
                                                 fontSize = 12.sp,
                                                 color = TextSecondary
                                             )
                                             Text(
-                                                text = "সাবটোটাল: ৳${(item.offerPrice * item.requestedQuantity).toInt()}",
+                                                text = "সাবটোটাল: ₹${(item.offerPrice * item.requestedQuantity).toInt()}",
                                                 fontSize = 13.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = EmeraldGreen
@@ -355,7 +355,7 @@ fun CartScreen(
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
-                                        text = "৳${sellerSubtotal.toInt()}",
+                                        text = "₹${sellerSubtotal.toInt()}",
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = EmeraldGreen
@@ -411,7 +411,7 @@ fun CartScreen(
                         Column {
                             Text("সর্বমোট প্রাক্কলিত বিল:", fontSize = 12.sp, color = TextSecondary)
                             Text(
-                                text = "৳${totalPrice.toInt()}",
+                                text = "₹${totalPrice.toInt()}",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = EmeraldGreen

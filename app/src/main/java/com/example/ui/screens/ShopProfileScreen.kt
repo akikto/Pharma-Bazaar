@@ -2,6 +2,9 @@ package com.example.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.ui.res.painterResource
+import com.example.R
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -89,14 +92,13 @@ fun ShopProfileScreen(
                 Surface(
                     shape = CircleShape,
                     color = Color.White,
-                    modifier = Modifier.size(70.dp)
+                    modifier = Modifier.size(72.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Outlined.LocalPharmacy,
-                            contentDescription = "Shop Profile",
-                            tint = RoyalPharmaBlue,
-                            modifier = Modifier.size(38.dp)
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_pharma_logo),
+                            contentDescription = "Pharma-Exchange Logo",
+                            modifier = Modifier.size(68.dp)
                         )
                     }
                 }

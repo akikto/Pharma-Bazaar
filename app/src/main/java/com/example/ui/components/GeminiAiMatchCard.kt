@@ -252,7 +252,7 @@ fun GeminiAiMatchCard(
 
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "৳${suggestion.unitPrice}",
+                            text = "₹${suggestion.unitPrice}",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = EmeraldGreen

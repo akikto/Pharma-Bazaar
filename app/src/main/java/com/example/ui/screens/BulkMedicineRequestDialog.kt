@@ -109,7 +109,7 @@ data class BulkMedicineRequest(
     val form: String,
     val packSize: String,
     val requestedQuantity: Int, // in Boxes
-    val targetUnitPrice: Double, // target price per Box in BDT
+    val targetUnitPrice: Double, // target price per Box in INR
     val minRequiredExpiryDays: Int, // e.g. 180 days (6 months)
     val expiryRequirementLabel: String,
     val urgencyLevel: String, // URGENT, NORMAL, FLEXIBLE
@@ -689,7 +689,7 @@ fun BulkMedicineRequestDialog(
                 OutlinedTextField(
                     value = targetUnitPriceInput,
                     onValueChange = { targetUnitPriceInput = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("প্রতি বক্স/প্যাক টার্গেট ক্রয় মূল্য (৳) *") },
+                    label = { Text("প্রতি বক্স/প্যাক টার্গেট ক্রয় মূল্য (₹) *") },
                     placeholder = { Text("যেমন: 180") },
                     leadingIcon = {
                         Icon(
@@ -732,7 +732,7 @@ fun BulkMedicineRequestDialog(
                                 color = TextSecondary
                             )
                             Text(
-                                text = "৳${String.format("%,.2f", totalEstimatedBudget)}",
+                                text = "₹${String.format("%,.2f", totalEstimatedBudget)}",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = RoyalPharmaBlue
@@ -744,7 +744,7 @@ fun BulkMedicineRequestDialog(
                             color = PharmaBlueLight
                         ) {
                             Text(
-                                text = "$parsedQuantity Box × ৳${parsedTargetPrice.toInt()}",
+                                text = "$parsedQuantity Box × ₹${parsedTargetPrice.toInt()}",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = RoyalPharmaBlue,
