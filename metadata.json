@@ -1,0 +1,6 @@
+{
+  "name": "ফার্মা বাজার - B2B Pharma Exchange",
+  "description": "B2B Medicine Marketplace with Live Offers, Multi-Seller Price Comparison, Inventory & Request Management",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
