@@ -33,6 +33,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
@@ -95,6 +97,9 @@ fun PharmacyRequestStatusTracker(
     request: BuyRequestEntity,
     onUpdateStatus: (requestId: Long, newStatus: String) -> Unit,
     isSupplierView: Boolean = true,
+    isSelected: Boolean = false,
+    onSelectToggle: ((Boolean) -> Unit)? = null,
+    isBulkMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val currentStep = RequestStatusStep.fromCode(request.status)
@@ -105,9 +110,9 @@ fun PharmacyRequestStatusTracker(
             .fillMaxWidth()
             .testTag("pharmacy_request_status_tracker_card"),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFFEFF6FF) else Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, BorderGray)
+        border = BorderStroke(if (isSelected) 1.5.dp else 1.dp, if (isSelected) RoyalPharmaBlue else BorderGray)
     ) {
         Column(
             modifier = Modifier
@@ -125,6 +130,17 @@ fun PharmacyRequestStatusTracker(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    if (onSelectToggle != null) {
+                        Checkbox(
+                            checked = isSelected,
+                            onCheckedChange = { onSelectToggle(it) },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = RoyalPharmaBlue
+                            ),
+                            modifier = Modifier.testTag("order_select_checkbox_${request.id}")
+                        )
+                    }
+
                     Surface(
                         shape = CircleShape,
                         color = PharmaBlueLight,
@@ -228,121 +244,12 @@ fun PharmacyRequestStatusTracker(
                 }
             }
 
-            // --- Status Step Progress Bar ---
-            if (isCancelledOrRejected) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFFFEE2E2),
-                    border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Cancel,
-                            contentDescription = "Cancelled",
-                            tint = Color.Red,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = "এই রিকোয়েস্টটি বাতিল/প্রত্যাখ্যান করা হয়েছে।",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF991B1B)
-                        )
-                    }
-                }
-            } else {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RequestStatusStep.entries.forEachIndexed { index, step ->
-                            val isCompleted = currentStep.stepIndex >= step.stepIndex
-                            val isCurrent = currentStep == step
-
-                            val circleBgColor by animateColorAsState(
-                                targetValue = when {
-                                    isCurrent -> RoyalPharmaBlue
-                                    isCompleted -> EmeraldGreen
-                                    else -> Color(0xFFE2E8F0)
-                                },
-                                label = "circleBg"
-                            )
-
-                            val iconColor by animateColorAsState(
-                                targetValue = if (isCompleted || isCurrent) Color.White else TextSecondary,
-                                label = "iconColor"
-                            )
-
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = circleBgColor,
-                                        modifier = Modifier.size(36.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = if (isCompleted && !isCurrent) Icons.Outlined.Check else step.icon,
-                                                contentDescription = step.titleBn,
-                                                tint = iconColor,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Text(
-                                    text = step.titleBn,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isCurrent) RoyalPharmaBlue else if (isCompleted) EmeraldGreen else TextSecondary,
-                                    textAlign = TextAlign.Center
-                                )
-
-                                Text(
-                                    text = step.descriptionBn,
-                                    fontSize = 9.sp,
-                                    color = TextSecondary,
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 1
-                                )
-                            }
-
-                            // Connecting progress line between nodes
-                            if (index < RequestStatusStep.entries.size - 1) {
-                                val lineActive = currentStep.stepIndex > index
-                                Box(
-                                    modifier = Modifier
-                                        .weight(0.6f)
-                                        .height(3.dp)
-                                        .padding(bottom = 18.dp)
-                                        .background(
-                                            color = if (lineActive) EmeraldGreen else Color(0xFFE2E8F0),
-                                            shape = RoundedCornerShape(2.dp)
-                                        )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            // --- Visual Progress Stepper UI ---
+            OrderShipmentStatusStepper(
+                currentStatus = request.status,
+                onUpdateStatus = { newStatus -> onUpdateStatus(request.id, newStatus) },
+                isSupplierView = isSupplierView
+            )
 
             // --- Supplier / Seller Status Update Controls ---
             if (isSupplierView) {

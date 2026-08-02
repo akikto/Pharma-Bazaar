@@ -13,6 +13,8 @@ import com.example.data.db.entities.TriggeredPriceAlertEntity
 import com.example.data.db.entities.WatchlistItemEntity
 import com.example.data.remote.FirestoreService
 import com.example.util.PharmaNotificationHelper
+import com.example.service.AiMatchSuggestion
+import com.example.service.GeminiSuggestionService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -214,6 +216,12 @@ class PharmaRepository(
 
     suspend fun clearCart() = pharmaDao.clearCart()
 
+    suspend fun insertSingleBuyRequest(request: BuyRequestEntity): Long {
+        val reqId = pharmaDao.insertBuyRequest(request)
+        firestoreService.savePharmacyRequest(request.copy(id = reqId))
+        return reqId
+    }
+
     suspend fun submitBuyRequestsFromCart(buyerShop: ShopProfileEntity, note: String = "") {
         val items = pharmaDao.getCartItems().first()
         if (items.isEmpty()) return
@@ -315,6 +323,12 @@ class PharmaRepository(
         }
     }
 
+    suspend fun getAiInventoryMatches(): List<AiMatchSuggestion> {
+        val openRequests = pharmaDao.getAllBuyRequests().first()
+        val activeOffers = pharmaDao.getAllActiveOffers().first()
+        return GeminiSuggestionService.matchRequestsWithInventory(openRequests, activeOffers)
+    }
+
     suspend fun syncAllWithFirestore() {
         try {
             val offers = pharmaDao.getAllActiveOffers().first()
@@ -325,8 +339,35 @@ class PharmaRepository(
             requests.forEach { req ->
                 firestoreService.savePharmacyRequest(req)
             }
+            // Fetch remote order history from Firestore
+            val cloudOrders = firestoreService.fetchOrderHistoryFromFirestore()
+            for (order in cloudOrders) {
+                val local = pharmaDao.getBuyRequestById(order.id)
+                if (local == null) {
+                    pharmaDao.insertBuyRequest(order)
+                } else if (local.status != order.status) {
+                    pharmaDao.updateRequestStatus(order.id, order.status)
+                }
+            }
         } catch (e: Exception) {
             // Handled safely
+        }
+    }
+
+    suspend fun syncOrderHistoryFromFirestore(): List<BuyRequestEntity> {
+        return try {
+            val cloudOrders = firestoreService.fetchOrderHistoryFromFirestore()
+            for (order in cloudOrders) {
+                val local = pharmaDao.getBuyRequestById(order.id)
+                if (local == null) {
+                    pharmaDao.insertBuyRequest(order)
+                } else if (local.status != order.status) {
+                    pharmaDao.updateRequestStatus(order.id, order.status)
+                }
+            }
+            pharmaDao.getAllBuyRequests().first()
+        } catch (e: Exception) {
+            pharmaDao.getAllBuyRequests().first()
         }
     }
 
@@ -394,6 +435,7 @@ class PharmaRepository(
                 sellerShopName = "সেবা ফার্মেসী",
                 sellerLocation = "মিরপুর-১০, ঢাকা",
                 sellerDistanceKm = 1.2,
+                sellerRating = 4.9,
                 isVerifiedShop = true,
                 notes = "মেয়াদ কম থাকায় ৫০% ছাড়। ক্যাশ অন ক্যাশ ব্যাক বা পিকআপ সুবিধা আছে।"
             ),
@@ -419,6 +461,7 @@ class PharmaRepository(
                 sellerShopName = "গ্রিন ফার্মা বাজার",
                 sellerLocation = "উত্তরা, ঢাকা",
                 sellerDistanceKm = 4.5,
+                sellerRating = 4.8,
                 isVerifiedShop = true,
                 notes = "অভারস্টক লট। অরিজিনাল ইনভয়েস সাথে দেওয়া হবে।"
             ),
@@ -444,6 +487,7 @@ class PharmaRepository(
                 sellerShopName = "মেডিসিন পয়েন্ট",
                 sellerLocation = "ধানমন্ডি, ঢাকা",
                 sellerDistanceKm = 2.8,
+                sellerRating = 4.7,
                 isVerifiedShop = true,
                 notes = "হোলসেল স্টক ক্লিয়ারেন্স।"
             ),
@@ -469,6 +513,7 @@ class PharmaRepository(
                 sellerShopName = "সেবা ফার্মেসী",
                 sellerLocation = "মিরপুর-১০, ঢাকা",
                 sellerDistanceKm = 1.2,
+                sellerRating = 4.9,
                 isVerifiedShop = true,
                 notes = "দ্রুত বিক্রয়ের জন্য বিশেষ দাম।"
             ),
@@ -494,6 +539,7 @@ class PharmaRepository(
                 sellerShopName = "জনতা ডিসপেনসারি",
                 sellerLocation = "চট্টগ্রাম",
                 sellerDistanceKm = 8.5,
+                sellerRating = 4.6,
                 isVerifiedShop = true,
                 notes = "কুরিয়ার এবং কন্ডিশনে পাঠানো যাবে।"
             )
@@ -564,6 +610,10 @@ class PharmaRepository(
                 form = "Capsule"
             )
         )
+    }
+
+    suspend fun updateOfferLowStockThreshold(offerId: Long, newThreshold: Int) {
+        pharmaDao.updateOfferLowStockThreshold(offerId, newThreshold)
     }
 }
 

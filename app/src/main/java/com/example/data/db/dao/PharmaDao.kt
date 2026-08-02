@@ -57,6 +57,9 @@ interface PharmaDao {
     @Query("UPDATE offer_listings SET availableQuantity = :newQty, updatedAt = :updatedAt WHERE id = :id")
     suspend fun updateOfferQuantity(id: Long, newQty: Int, updatedAt: Long = System.currentTimeMillis())
 
+    @Query("UPDATE offer_listings SET lowStockThreshold = :newThreshold, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateOfferLowStockThreshold(id: Long, newThreshold: Int, updatedAt: Long = System.currentTimeMillis())
+
     @Query("DELETE FROM offer_listings WHERE id = :id")
     suspend fun deleteOfferById(id: Long)
 

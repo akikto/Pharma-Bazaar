@@ -38,7 +38,9 @@ data class OfferListingEntity(
     val sellerShopName: String,
     val sellerLocation: String,
     val sellerDistanceKm: Double,
+    val sellerRating: Double = 4.8,
     val isVerifiedShop: Boolean = true,
+    val lowStockThreshold: Int = 10,
     val notes: String = "",
     val status: String = "ACTIVE", // ACTIVE, PAUSED, SOLD_OUT
     val createdAt: Long = System.currentTimeMillis(),

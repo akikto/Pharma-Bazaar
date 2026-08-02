@@ -37,6 +37,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.ui.theme.PharmaBlueLight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,6 +78,7 @@ fun MedicineOfferCard(
     onToggleWatchlist: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    var showPriceTrendDialog by remember { mutableStateOf(false) }
 
     // Expiry badge color logic based on days remaining
     val (expiryColor, expiryBg, expiryBorder, expiryText) = when {
@@ -255,35 +261,73 @@ fun MedicineOfferCard(
 
                 // Pricing Section
                 Row(
-                    verticalAlignment = Alignment.Bottom
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "MRP: ৳${offer.mrp.toInt()}",
-                        fontSize = 12.sp,
-                        color = TextSecondary,
-                        textDecoration = TextDecoration.LineThrough,
-                        modifier = Modifier.padding(bottom = 3.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "অফার:",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldGreen,
-                        modifier = Modifier.padding(bottom = 3.dp, end = 2.dp)
-                    )
-                    Text(
-                        text = "৳${offer.offerPrice.toInt()}",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Black,
-                        color = EmeraldGreen
-                    )
-                    Text(
-                        text = " /বক্স",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(bottom = 3.dp)
+                    Row(
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Text(
+                            text = "MRP: ৳${offer.mrp.toInt()}",
+                            fontSize = 12.sp,
+                            color = TextSecondary,
+                            textDecoration = TextDecoration.LineThrough,
+                            modifier = Modifier.padding(bottom = 3.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "অফার:",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldGreen,
+                            modifier = Modifier.padding(bottom = 3.dp, end = 2.dp)
+                        )
+                        Text(
+                            text = "৳${offer.offerPrice.toInt()}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = EmeraldGreen
+                        )
+                        Text(
+                            text = " /বক্স",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextSecondary,
+                            modifier = Modifier.padding(bottom = 3.dp)
+                        )
+                    }
+
+                    Surface(
+                        onClick = { showPriceTrendDialog = true },
+                        shape = RoundedCornerShape(8.dp),
+                        color = PharmaBlueLight,
+                        border = BorderStroke(1.dp, RoyalPharmaBlue.copy(alpha = 0.3f)),
+                        modifier = Modifier.testTag("open_price_trend_dialog_btn_${offer.id}")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("📊", fontSize = 11.sp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "দামের ট্রেন্ড",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = RoyalPharmaBlue
+                            )
+                        }
+                    }
+                }
+
+                if (showPriceTrendDialog) {
+                    MedicinePriceTrendDialog(
+                        medicineName = "${offer.medicineName} ${offer.strength}",
+                        genericName = offer.genericName,
+                        mrp = offer.mrp,
+                        currentOfferPrice = offer.offerPrice,
+                        onDismiss = { showPriceTrendDialog = false }
                     )
                 }
 
@@ -305,7 +349,7 @@ fun MedicineOfferCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${offer.sellerShopName} (${offer.sellerLocation} • ${offer.sellerDistanceKm} km)",
+                        text = "⭐ ${offer.sellerRating} • ${offer.sellerShopName} (${offer.sellerLocation} • ${offer.sellerDistanceKm} km)",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = TextPrimary,

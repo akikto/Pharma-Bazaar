@@ -61,6 +61,7 @@ fun AddEditOfferDialog(
         expiryDate: String,
         daysUntilExpiry: Int,
         quantity: Int,
+        lowStockThreshold: Int,
         mrp: Double,
         offerPrice: Double,
         moq: Int,
@@ -79,6 +80,7 @@ fun AddEditOfferDialog(
     var expiryDate by remember { mutableStateOf(offerToEdit?.expiryDate ?: "31 Dec 2026") }
     var daysUntilExpiryText by remember { mutableStateOf((offerToEdit?.daysUntilExpiry ?: 45).toString()) }
     var quantityText by remember { mutableStateOf((offerToEdit?.availableQuantity ?: 50).toString()) }
+    var lowStockThresholdText by remember { mutableStateOf((offerToEdit?.lowStockThreshold ?: 10).toString()) }
     var mrpText by remember { mutableStateOf((offerToEdit?.mrp ?: 250.0).toInt().toString()) }
     var offerPriceText by remember { mutableStateOf((offerToEdit?.offerPrice ?: 150.0).toInt().toString()) }
     var moqText by remember { mutableStateOf((offerToEdit?.minimumOrderQuantity ?: 5).toString()) }
@@ -221,6 +223,15 @@ fun AddEditOfferDialog(
                     )
                 }
 
+                OutlinedTextField(
+                    value = lowStockThresholdText,
+                    onValueChange = { lowStockThresholdText = it },
+                    label = { Text("⚠️ লো স্টক অ্যালার্ট থ্রেশহোল্ড (Box)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp)
+                )
+
                 Text("৩. মূল্য এবং সর্বনিম্ন অর্ডার পরিমাণ (MOQ):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = RoyalPharmaBlue)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -265,6 +276,7 @@ fun AddEditOfferDialog(
                 onClick = {
                     val days = daysUntilExpiryText.toIntOrNull() ?: 30
                     val qty = quantityText.toIntOrNull() ?: 10
+                    val threshold = lowStockThresholdText.toIntOrNull() ?: 10
                     val mrpVal = mrpText.toDoubleOrNull() ?: 100.0
                     val offerVal = offerPriceText.toDoubleOrNull() ?: 80.0
                     val moqVal = moqText.toIntOrNull() ?: 1
@@ -281,6 +293,7 @@ fun AddEditOfferDialog(
                             expiryDate,
                             days,
                             qty,
+                            threshold,
                             mrpVal,
                             offerVal,
                             moqVal,

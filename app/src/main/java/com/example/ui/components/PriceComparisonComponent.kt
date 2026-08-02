@@ -94,6 +94,7 @@ fun PriceComparisonComponent(
     modifier: Modifier = Modifier
 ) {
     var selectedSort by remember { mutableStateOf(PriceSortOption.LOWEST_PRICE) }
+    var showPriceTrendVisualizer by remember { mutableStateOf(false) }
 
     if (offers.isEmpty()) {
         Card(
@@ -281,6 +282,46 @@ fun PriceComparisonComponent(
                                 maxLines = 1
                             )
                         }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Toggle Button for Historical Price Trend Chart
+                Button(
+                    onClick = { showPriceTrendVisualizer = !showPriceTrendVisualizer },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (showPriceTrendVisualizer) RoyalPharmaBlue else PharmaBlueLight,
+                        contentColor = if (showPriceTrendVisualizer) Color.White else RoyalPharmaBlue
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("toggle_price_trend_chart_btn")
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(if (showPriceTrendVisualizer) "📊" else "📈", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (showPriceTrendVisualizer) "মূল্য ট্রেন্ড অ্যানালিটিক্স লুকান" else "📊 ঐতিহাসিক মূল্য ট্রেন্ড ও ক্রয় বিশ্লেষণ চার্ট দেখুন",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                AnimatedVisibility(visible = showPriceTrendVisualizer) {
+                    Column {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        MedicinePriceTrendVisualizer(
+                            medicineName = medicineFullName,
+                            mrp = mrpPrice.toDouble(),
+                            currentOfferPrice = minPrice.toDouble()
+                        )
                     }
                 }
             }

@@ -15,17 +15,73 @@ object PharmaNotificationHelper {
     const val CHANNEL_NAME = "অর্ডার স্ট্যাটাস নোটিফিকেশন"
     const val CHANNEL_DESC = "সাপ্লায়ার অর্ডার ডিসপ্যাচ ও ডেলিভারি স্ট্যাটাস আপডেট নোটিফিকেশন"
 
+    const val LOW_STOCK_CHANNEL_ID = "pharma_low_stock_alerts"
+    const val LOW_STOCK_CHANNEL_NAME = "লো স্টক অ্যালার্ট নোটিফিকেশন"
+    const val LOW_STOCK_CHANNEL_DESC = "ইনভেন্টরি স্টক নির্দিষ্ট থ্রেশহোল্ডের নিচে নামলে স্থানীয় নোটিফিকেশন অ্যালার্ট"
+
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            val orderChannel = NotificationChannel(
+                CHANNEL_ID,
+                CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
                 description = CHANNEL_DESC
                 enableVibration(true)
             }
-            val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(orderChannel)
+
+            val lowStockChannel = NotificationChannel(
+                LOW_STOCK_CHANNEL_ID,
+                LOW_STOCK_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = LOW_STOCK_CHANNEL_DESC
+                enableVibration(true)
+            }
+            notificationManager.createNotificationChannel(lowStockChannel)
         }
+    }
+
+    fun showLowStockAlertNotification(
+        context: Context,
+        medicineName: String,
+        currentStock: Int,
+        threshold: Int,
+        sellerShopName: String
+    ) {
+        createNotificationChannel(context)
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("target_screen", "seller_dashboard")
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            (System.currentTimeMillis() % 10000).toInt(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val title = "⚠️ লো স্টক অ্যালার্ট! $medicineName"
+        val body = "$sellerShopName-এর $medicineName স্টক কমে মাত্র $currentStock বক্সে নেমেছে (নির্ধারিত থ্রেশহোল্ড: $threshold বক্স)। অবিলম্বে রি-স্টক করার পরামর্শ দেওয়া হচ্ছে।"
+
+        val builder = NotificationCompat.Builder(context, LOW_STOCK_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify((medicineName.hashCode() and 0x7FFFFFFF), builder.build())
     }
 
     fun showOrderStatusNotification(

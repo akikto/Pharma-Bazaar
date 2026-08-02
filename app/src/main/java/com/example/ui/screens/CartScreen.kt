@@ -19,9 +19,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.RemoveShoppingCart
 import androidx.compose.material.icons.outlined.Send
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -32,6 +34,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,6 +52,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.db.entities.BuyRequestEntity
 import com.example.data.db.entities.CartItemEntity
 import com.example.ui.theme.EmeraldGreen
 import com.example.ui.theme.RoyalPharmaBlue
@@ -57,11 +64,17 @@ import com.example.ui.theme.TextSecondary
 fun CartScreen(
     cartItems: List<CartItemEntity>,
     totalPrice: Double,
+    buyRequests: List<BuyRequestEntity> = emptyList(),
+    activeShopName: String = "My Pharmacy",
     onUpdateQuantity: (cartItemId: Long, newQuantity: Int) -> Unit,
     onDeleteItem: (cartItemId: Long) -> Unit,
     onCheckout: (note: String) -> Unit,
+    onUpdateOrderStatus: (requestId: Long, newStatus: String) -> Unit = { _, _ -> },
+    onRefreshFirestoreOrders: () -> Unit = {},
+    onReorderClick: (request: BuyRequestEntity) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var selectedScreenTab by remember { mutableStateOf(0) } // 0 = Active Cart, 1 = Order History
     var checkoutNote by remember { mutableStateOf("") }
 
     // Group cart items by seller
@@ -72,48 +85,106 @@ fun CartScreen(
             .fillMaxSize()
             .background(SoftPaperGray)
     ) {
-        // Top Title Header
+        // Top Header & View Tab Selector
         Surface(
             color = RoyalPharmaBlue,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "মাল্টি-ভেন্ডর কার্ট (Multi-Vendor Cart)",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "দোকান অনুযায়ী আলাদা আলাদা বাই রিকোয়েস্ট তৈরি হবে",
-                        fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = if (selectedScreenTab == 0) "মাল্টি-ভেন্ডর কার্ট (Multi-Vendor Cart)" else "ফার্মেসী অর্ডার হিস্ট্রি (Order History)",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = if (selectedScreenTab == 0) "দোকান অনুযায়ী আলাদা আলাদা বাই রিকোয়েস্ট তৈরি হবে" else "ক্লাউড ফায়ারস্টোর সংরক্ষিত অতীতের সব লেনদেন",
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.85f)
+                        )
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White.copy(alpha = 0.2f)
+                    ) {
+                        Text(
+                            text = if (selectedScreenTab == 0) "${cartItems.size} টি কার্ট আইটেম" else "${buyRequests.size} টি অর্ডার",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color.White.copy(alpha = 0.2f)
+                // Top Tab Strip: Cart vs Order History
+                TabRow(
+                    selectedTabIndex = selectedScreenTab,
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedScreenTab]),
+                            color = Color.White,
+                            height = 3.dp
+                        )
+                    }
                 ) {
-                    Text(
-                        text = "${cartItems.size} টি আইটেম",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
+                    Tab(
+                        selected = selectedScreenTab == 0,
+                        onClick = { selectedScreenTab = 0 },
+                        modifier = Modifier.testTag("cart_tab_active_cart")
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 10.dp)
+                        ) {
+                            Icon(imageVector = Icons.Outlined.ShoppingCart, contentDescription = "Cart", modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("সক্রিয় কার্ট", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Tab(
+                        selected = selectedScreenTab == 1,
+                        onClick = { selectedScreenTab = 1 },
+                        modifier = Modifier.testTag("cart_tab_order_history")
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 10.dp)
+                        ) {
+                            Icon(imageVector = Icons.Outlined.History, contentDescription = "History", modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("অর্ডার হিস্ট্রি (${buyRequests.size})", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
         }
 
-        if (cartItems.isEmpty()) {
+        if (selectedScreenTab == 1) {
+            // Render Order History Component for Pharmacists
+            OrderHistoryScreen(
+                ordersList = buyRequests,
+                activeShopName = activeShopName,
+                isSupplierView = false,
+                onUpdateOrderStatus = onUpdateOrderStatus,
+                onRefreshFirestoreOrders = onRefreshFirestoreOrders,
+                onReorderClick = onReorderClick
+            )
+        } else {
+            // Render Active Cart Content
+            if (cartItems.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -374,4 +445,5 @@ fun CartScreen(
             }
         }
     }
+}
 }

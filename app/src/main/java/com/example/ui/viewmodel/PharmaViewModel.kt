@@ -2,6 +2,7 @@ package com.example.ui.viewmodel
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.db.PharmaDatabase
@@ -15,6 +16,9 @@ import com.example.data.db.entities.ShopProfileEntity
 import com.example.data.db.entities.TriggeredPriceAlertEntity
 import com.example.data.db.entities.WatchlistItemEntity
 import com.example.data.repository.PharmaRepository
+import com.example.service.AiMatchSuggestion
+import com.example.util.InventoryCsvExportUtil
+import com.example.util.PharmaNotificationHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +54,36 @@ enum class MultiSellerSort(val titleBn: String) {
     NEAREST("নিকটস্থ দোকান")
 }
 
+enum class MarketplaceSortOption(val titleBn: String, val titleEn: String, val iconEmoji: String) {
+    RECOMMENDED("সুপারিশকৃত", "Recommended", "✨"),
+    PRICE_LOW_HIGH("দাম: কম ➔ বেশি", "Price: Low to High", "💰"),
+    PRICE_HIGH_LOW("দাম: বেশি ➔ কম", "Price: High to Low", "🏷️"),
+    SUPPLIER_RATING("সাপ্লায়ার রেটিং: সর্বোচ্চ ⭐", "Supplier Rating: Highest", "⭐"),
+    DISTANCE_NEAREST("দূরত্ব: নিকটতম 📍", "Distance: Nearest First", "📍")
+}
+
+data class MarketplaceFilterState(
+    val maxPrice: Double = 10000.0,
+    val minSupplierRating: Double = 0.0,
+    val maxDistanceKm: Double = 50.0,
+    val verifiedOnly: Boolean = false,
+    val inStockOnly: Boolean = false
+) {
+    val isActive: Boolean
+        get() = maxPrice < 10000.0 || minSupplierRating > 0.0 || maxDistanceKm < 50.0 || verifiedOnly || inStockOnly
+
+    val activeCount: Int
+        get() {
+            var count = 0
+            if (maxPrice < 10000.0) count++
+            if (minSupplierRating > 0.0) count++
+            if (maxDistanceKm < 50.0) count++
+            if (verifiedOnly) count++
+            if (inStockOnly) count++
+            return count
+        }
+}
+
 class PharmaViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: PharmaRepository
@@ -63,6 +97,12 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _selectedCategory = MutableStateFlow("ALL")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
+
+    private val _marketplaceSort = MutableStateFlow(MarketplaceSortOption.RECOMMENDED)
+    val marketplaceSort: StateFlow<MarketplaceSortOption> = _marketplaceSort.asStateFlow()
+
+    private val _marketplaceFilter = MutableStateFlow(MarketplaceFilterState())
+    val marketplaceFilter: StateFlow<MarketplaceFilterState> = _marketplaceFilter.asStateFlow()
 
     private val _currentTab = MutableStateFlow(0)
     val currentTab: StateFlow<Int> = _currentTab.asStateFlow()
@@ -116,11 +156,33 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    // Gemini AI Smart Inventory Matching State
+    private val _aiSuggestions = MutableStateFlow<List<AiMatchSuggestion>>(emptyList())
+    val aiSuggestions: StateFlow<List<AiMatchSuggestion>> = _aiSuggestions.asStateFlow()
+
+    private val _isGeneratingAiSuggestions = MutableStateFlow(false)
+    val isGeneratingAiSuggestions: StateFlow<Boolean> = _isGeneratingAiSuggestions.asStateFlow()
+
+    fun loadGeminiAiSuggestions() {
+        viewModelScope.launch {
+            _isGeneratingAiSuggestions.value = true
+            try {
+                val matches = repository.getAiInventoryMatches()
+                _aiSuggestions.value = matches
+            } catch (e: Exception) {
+                _aiSuggestions.value = emptyList()
+            } finally {
+                _isGeneratingAiSuggestions.value = false
+            }
+        }
+    }
+
     fun refreshPriceLists() {
         viewModelScope.launch {
             _isRefreshing.value = true
-            kotlinx.coroutines.delay(1200)
-            _snackbarMessage.value = "সর্বশেষ ওষুধের মূল্য তালিকা রিফ্রেশ করা হয়েছে (Price list refreshed)"
+            loadGeminiAiSuggestions()
+            kotlinx.coroutines.delay(1000)
+            _snackbarMessage.value = "সর্বশেষ ওষুধের মূল্য তালিকা ও Gemini AI ম্যাচ রিফ্রেশ করা হয়েছে"
             _isRefreshing.value = false
         }
     }
@@ -152,6 +214,7 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.seedSampleDataIfEmpty()
             repository.syncAllWithFirestore()
+            loadGeminiAiSuggestions()
         }
     }
 
@@ -159,6 +222,37 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.syncAllWithFirestore()
             showSnackbar("☁️ ফায়ারবেস ক্লাউড ফায়ারস্টোর সিংক্রোনাইজড (Cloud Firestore Synced)")
+        }
+    }
+
+    fun refreshOrderHistoryFromFirestore() {
+        viewModelScope.launch {
+            repository.syncOrderHistoryFromFirestore()
+            showSnackbar("🔥 Cloud Firestore থেকে লেটেস্ট অর্ডার হিস্ট্রি সিঙ্ক করা হয়েছে!")
+        }
+    }
+
+    fun reorderPreviousRequest(req: BuyRequestEntity) {
+        viewModelScope.launch {
+            val total = req.unitPrice * req.requestedQuantity
+            val newReq = BuyRequestEntity(
+                offerListingId = req.offerListingId,
+                medicineName = req.medicineName,
+                requestedQuantity = req.requestedQuantity,
+                unitPrice = req.unitPrice,
+                totalPrice = total,
+                buyerShopId = _activeShop.value.id,
+                buyerShopName = _activeShop.value.shopName,
+                buyerPhone = _activeShop.value.phone,
+                sellerShopId = req.sellerShopId,
+                sellerShopName = req.sellerShopName,
+                sellerPhone = req.sellerPhone,
+                note = "Re-ordered from history #${req.id}",
+                status = "PENDING",
+                timestamp = System.currentTimeMillis()
+            )
+            val id = repository.insertSingleBuyRequest(newReq)
+            showSnackbar("🔁 #${req.id}-এর স্থানান্তরিত নতুন বাই রিকোয়েস্ট সফলভাবে প্লেস করা হয়েছে!")
         }
     }
 
@@ -419,14 +513,17 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
     val masterMedicines: StateFlow<List<MasterMedicineEntity>> = repository.allMasterMedicines
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // All active offers filtered by search, category & quick filter
+    // All active offers filtered by search, category, quick filter, marketplace sort & advanced filter
     val filteredOffers: StateFlow<List<OfferListingEntity>> = combine(
         repository.allActiveOffers,
         _searchQuery,
         _selectedFilter,
-        _selectedCategory
-    ) { offers, query, filter, category ->
+        _selectedCategory,
+        combine(_marketplaceSort, _marketplaceFilter) { sort, filter -> sort to filter }
+    ) { offers, query, filter, category, (sortOption, mpFilter) ->
         var list = offers
+
+        // 1. Text Search Query
         if (query.isNotBlank()) {
             val q = query.trim().lowercase()
             list = list.filter {
@@ -438,15 +535,45 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                         it.batchNumber.lowercase().contains(q)
             }
         }
+
+        // 2. Category Selection
         if (category != "ALL") {
             list = list.filter { it.form.equals(category, ignoreCase = true) }
         }
-        when (filter) {
+
+        // 3. Quick Filter Preset
+        list = when (filter) {
             QuickFilter.ALL -> list
             QuickFilter.NEAR_ME -> list.filter { it.sellerDistanceKm <= 2.0 }
             QuickFilter.SHORT_EXPIRY -> list.filter { it.daysUntilExpiry <= 30 }
             QuickFilter.HIGH_DISCOUNT -> list.filter { it.discountPercent >= 50 }
             QuickFilter.OVERSTOCK -> list.filter { it.availableQuantity >= 50 }
+        }
+
+        // 4. Marketplace Advanced Filters (Price, Rating, Distance, Verified, In-Stock)
+        if (mpFilter.maxPrice < 10000.0) {
+            list = list.filter { it.offerPrice <= mpFilter.maxPrice }
+        }
+        if (mpFilter.minSupplierRating > 0.0) {
+            list = list.filter { it.sellerRating >= mpFilter.minSupplierRating }
+        }
+        if (mpFilter.maxDistanceKm < 50.0) {
+            list = list.filter { it.sellerDistanceKm <= mpFilter.maxDistanceKm }
+        }
+        if (mpFilter.verifiedOnly) {
+            list = list.filter { it.isVerifiedShop }
+        }
+        if (mpFilter.inStockOnly) {
+            list = list.filter { it.availableQuantity > 0 }
+        }
+
+        // 5. Sorting Options (Price, Supplier Rating, Distance, Recommended)
+        when (sortOption) {
+            MarketplaceSortOption.RECOMMENDED -> list
+            MarketplaceSortOption.PRICE_LOW_HIGH -> list.sortedBy { it.offerPrice }
+            MarketplaceSortOption.PRICE_HIGH_LOW -> list.sortedByDescending { it.offerPrice }
+            MarketplaceSortOption.SUPPLIER_RATING -> list.sortedByDescending { it.sellerRating }
+            MarketplaceSortOption.DISTANCE_NEAREST -> list.sortedBy { it.sellerDistanceKm }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -530,10 +657,20 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         _selectedCategory.value = category
     }
 
+    fun setMarketplaceSort(sort: MarketplaceSortOption) {
+        _marketplaceSort.value = sort
+    }
+
+    fun setMarketplaceFilter(filter: MarketplaceFilterState) {
+        _marketplaceFilter.value = filter
+    }
+
     fun resetFilters() {
         _searchQuery.value = ""
         _selectedFilter.value = QuickFilter.ALL
         _selectedCategory.value = "ALL"
+        _marketplaceSort.value = MarketplaceSortOption.RECOMMENDED
+        _marketplaceFilter.value = MarketplaceFilterState()
     }
 
     fun setTab(tab: Int) {
@@ -582,6 +719,14 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
     fun sendBuyRequestDirect(offer: OfferListingEntity, requestedQuantity: Int, note: String) {
         viewModelScope.launch {
             val total = offer.offerPrice * requestedQuantity
+            val newAvailableQty = (offer.availableQuantity - requestedQuantity).coerceAtLeast(0)
+            val updatedOffer = offer.copy(
+                availableQuantity = newAvailableQty,
+                reservedQuantity = offer.reservedQuantity + requestedQuantity,
+                status = if (newAvailableQty == 0) "SOLD_OUT" else offer.status
+            )
+            repository.updateOffer(updatedOffer)
+
             val req = BuyRequestEntity(
                 offerListingId = offer.id,
                 medicineName = "${offer.medicineName} ${offer.strength}",
@@ -598,12 +743,19 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 status = "PENDING",
                 timestamp = System.currentTimeMillis()
             )
-            val reqId = repository.insertOffer(offer.copy(
-                availableQuantity = (offer.availableQuantity - requestedQuantity).coerceAtLeast(0),
-                reservedQuantity = offer.reservedQuantity + requestedQuantity
-            ))
-            
-            repository.submitBuyRequestsFromCart(_activeShop.value, note)
+            repository.insertSingleBuyRequest(req)
+
+            if (newAvailableQty <= offer.lowStockThreshold) {
+                val ctx = getApplication<Application>()
+                PharmaNotificationHelper.showLowStockAlertNotification(
+                    context = ctx,
+                    medicineName = offer.medicineName,
+                    currentStock = newAvailableQty,
+                    threshold = offer.lowStockThreshold,
+                    sellerShopName = offer.sellerShopName
+                )
+            }
+
             hideBuyRequestDialog()
             showSnackbar("✅ বাই রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!")
         }
@@ -629,6 +781,23 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
     fun closeAddOfferDialog() {
         _addEditOfferDialogShow.value = false
         _editingOffer.value = null
+    }
+
+    fun exportInventoryCsv(context: Context) {
+        viewModelScope.launch {
+            val offers = sellerInventory.value
+            val shopName = _activeShop.value.shopName
+            if (offers.isEmpty()) {
+                showSnackbar("⚠️ এক্সপোর্ট করার জন্য কোনো ইনভেন্টরি পণ্য পাওয়া যায়নি।")
+                return@launch
+            }
+            val summary = InventoryCsvExportUtil.exportAndShareInventoryCsv(context, offers, shopName)
+            if (summary != null) {
+                showSnackbar("📊 ${summary.totalItems} টি পণ্যের সিএসভি ফাইল সফলভাবে এক্সপোর্ট করা হয়েছে! (মোট স্টক মূল্য: ৳${summary.totalStockValueBdt.toInt()})")
+            } else {
+                showSnackbar("❌ সিএসভি ফাইল এক্সপোর্টে সমস্যা হয়েছে।")
+            }
+        }
     }
 
     fun openBulkRequestDialog() {
@@ -691,6 +860,7 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         expiryDate: String,
         daysUntilExpiry: Int,
         quantity: Int,
+        lowStockThreshold: Int = 10,
         mrp: Double,
         offerPrice: Double,
         moq: Int,
@@ -713,6 +883,7 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                         expiryDate = expiryDate,
                         daysUntilExpiry = daysUntilExpiry,
                         availableQuantity = quantity,
+                        lowStockThreshold = lowStockThreshold,
                         mrp = mrp,
                         offerPrice = offerPrice,
                         discountPercent = discount,
@@ -736,6 +907,7 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                     expiryDate = expiryDate,
                     daysUntilExpiry = daysUntilExpiry,
                     availableQuantity = quantity,
+                    lowStockThreshold = lowStockThreshold,
                     reservedQuantity = 0,
                     mrp = mrp,
                     offerPrice = offerPrice,
@@ -752,7 +924,49 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 repository.insertOffer(newOffer)
                 showSnackbar("🚀 নতুন অফার লিস্টিং তৈরি হয়েছে!")
             }
+
+            if (quantity <= lowStockThreshold) {
+                val ctx = getApplication<Application>()
+                PharmaNotificationHelper.showLowStockAlertNotification(
+                    context = ctx,
+                    medicineName = medicineName,
+                    currentStock = quantity,
+                    threshold = lowStockThreshold,
+                    sellerShopName = currentSellerName
+                )
+            }
+
             closeAddOfferDialog()
+        }
+    }
+
+    fun quickRestockOffer(offer: OfferListingEntity, addQty: Int = 50) {
+        viewModelScope.launch {
+            val newQty = offer.availableQuantity + addQty
+            val updatedOffer = offer.copy(
+                availableQuantity = newQty,
+                status = if (newQty > 0) "ACTIVE" else offer.status,
+                updatedAt = System.currentTimeMillis()
+            )
+            repository.updateOffer(updatedOffer)
+            showSnackbar("⚡ +$addQty বক্স স্টক রি-স্টক সফল হয়েছে! বর্তমান স্টক: $newQty")
+        }
+    }
+
+    fun updateOfferLowStockThreshold(offer: OfferListingEntity, newThreshold: Int) {
+        viewModelScope.launch {
+            repository.updateOfferLowStockThreshold(offer.id, newThreshold)
+            showSnackbar("⚙️ ${offer.medicineName}-এর লো স্টক থ্রেশহোল্ড $newThreshold বক্সে সেট করা হয়েছে!")
+            if (offer.availableQuantity <= newThreshold) {
+                val ctx = getApplication<Application>()
+                PharmaNotificationHelper.showLowStockAlertNotification(
+                    context = ctx,
+                    medicineName = offer.medicineName,
+                    currentStock = offer.availableQuantity,
+                    threshold = newThreshold,
+                    sellerShopName = offer.sellerShopName
+                )
+            }
         }
     }
 
@@ -803,6 +1017,25 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 else -> "📦"
             }
             showSnackbar("$icon রিকোয়েস্ট স্ট্যাটাস: $status")
+        }
+    }
+
+    fun updateMultipleOrderStatuses(requestIds: List<Long>, status: String, context: android.content.Context? = null) {
+        if (requestIds.isEmpty()) return
+        viewModelScope.launch {
+            val ctx = context ?: getApplication<Application>()
+            requestIds.forEach { id ->
+                repository.updateBuyRequestStatus(id, status, ctx)
+            }
+            val statusLabel = when (status.uppercase()) {
+                "ACCEPTED" -> "Accepted (গৃহীত)"
+                "DISPATCHED" -> "Dispatched (ডিচপ্যাচড 🚚)"
+                "DELIVERED" -> "Delivered (ডেলিভারড 🎉)"
+                "COMPLETED" -> "Completed (সম্পন্ন ✅)"
+                "REJECTED" -> "Rejected (বাতিল ❌)"
+                else -> status
+            }
+            showSnackbar("⚡ ${requestIds.size} টি অর্ডারের স্ট্যাটাস '$statusLabel' এ বাল্ক আপডেট করা হয়েছে!")
         }
     }
 

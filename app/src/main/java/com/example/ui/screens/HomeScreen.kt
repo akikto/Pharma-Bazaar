@@ -65,7 +65,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material.icons.outlined.PostAdd
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import com.example.service.AiMatchSuggestion
 import com.example.ui.components.CategoryFilterBar
+import com.example.ui.components.GeminiAiMatchCard
+import com.example.ui.components.MarketplaceSortFilterBar
 import com.example.ui.components.MedicineOfferCard
 import com.example.ui.components.MedicineOfferGridCard
 import com.example.ui.components.MultiSellerComparisonCard
@@ -83,6 +86,8 @@ import com.example.ui.theme.SoftPaperGray
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.UrgentRed
+import com.example.ui.viewmodel.MarketplaceFilterState
+import com.example.ui.viewmodel.MarketplaceSortOption
 import com.example.ui.viewmodel.QuickFilter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,6 +100,10 @@ fun HomeScreen(
     onFilterSelected: (QuickFilter) -> Unit,
     selectedCategory: String,
     onCategorySelected: (String) -> Unit,
+    activeSort: MarketplaceSortOption = MarketplaceSortOption.RECOMMENDED,
+    onSortSelected: (MarketplaceSortOption) -> Unit = {},
+    activeFilter: MarketplaceFilterState = MarketplaceFilterState(),
+    onFilterChanged: (MarketplaceFilterState) -> Unit = {},
     onResetFilters: () -> Unit,
     offersList: List<OfferListingEntity>,
     groupedCatalog: Map<String, List<OfferListingEntity>>,
@@ -107,6 +116,10 @@ fun HomeScreen(
     onCompareClick: (medicineFullName: String) -> Unit,
     onOpenCartClick: () -> Unit,
     onPostBulkRequestClick: () -> Unit = {},
+    aiSuggestions: List<AiMatchSuggestion> = emptyList(),
+    isGeneratingAiSuggestions: Boolean = false,
+    onRefreshAiSuggestions: () -> Unit = {},
+    onAddToCartFromAiMatch: (Long) -> Unit = {},
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -251,6 +264,15 @@ fun HomeScreen(
         QuickFilterBar(
             selectedFilter = selectedFilter,
             onFilterSelected = onFilterSelected
+        )
+
+        // Marketplace Sort & Advanced Filter Bar (Price, Supplier Rating, Distance)
+        MarketplaceSortFilterBar(
+            activeSort = activeSort,
+            onSortSelected = onSortSelected,
+            activeFilter = activeFilter,
+            onFilterChanged = onFilterChanged,
+            onResetAll = onResetFilters
         )
 
         // View Mode Switcher Bar
@@ -460,6 +482,57 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(bottom = 80.dp)
                     ) {
+                        if (aiSuggestions.isNotEmpty() || isGeneratingAiSuggestions) {
+                            item(key = "gemini_ai_suggestions_header") {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "🤖 Gemini AI স্মার্ট ম্যাচিং (${aiSuggestions.size} টি ডিল)",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextPrimary
+                                        )
+
+                                        androidx.compose.material3.TextButton(
+                                            onClick = onRefreshAiSuggestions,
+                                            modifier = Modifier.testTag("refresh_gemini_ai_suggestions")
+                                        ) {
+                                            Text(
+                                                text = if (isGeneratingAiSuggestions) "ম্যাচিং হচ্ছে..." else "🔄 রিফ্রেশ",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = RoyalPharmaBlue
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    aiSuggestions.forEach { suggestion ->
+                                        GeminiAiMatchCard(
+                                            suggestion = suggestion,
+                                            onAddToCart = { offerId -> onAddToCartFromAiMatch(offerId) },
+                                            onOpenChat = { reqId ->
+                                                val matchedOffer = offersList.find { it.id == suggestion.matchedOfferListingId }
+                                                if (matchedOffer != null) {
+                                                    onChatClick(matchedOffer)
+                                                }
+                                            },
+                                            modifier = Modifier.padding(bottom = 10.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         items(offersList, key = { it.id }) { offer ->
                             val isBookmarked = watchlistedNames.contains(offer.medicineName) ||
                                     watchlistedNames.contains("${offer.medicineName} ${offer.strength}")

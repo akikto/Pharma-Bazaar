@@ -153,12 +153,51 @@ class FirestoreService {
         return try {
             db.collection(COLLECTION_PHARMACY_REQUESTS)
                 .document(requestId.toString())
-                .update("status", status)
+                .update(
+                    mapOf(
+                        "status" to status,
+                        "updatedAt" to System.currentTimeMillis()
+                    )
+                )
                 .await()
             true
         } catch (e: Exception) {
             Log.w(TAG, "Unable to update request status in Firestore: ${e.message}")
             false
+        }
+    }
+
+    /**
+     * One-time fetch of order history transactions from Cloud Firestore.
+     */
+    suspend fun fetchOrderHistoryFromFirestore(): List<BuyRequestEntity> {
+        val db = getFirestore() ?: return emptyList()
+        return try {
+            val snapshot = db.collection(COLLECTION_PHARMACY_REQUESTS).get().await()
+            snapshot.documents.mapNotNull { doc ->
+                val data = doc.data ?: return@mapNotNull null
+                val id = (data["id"] as? Long) ?: doc.id.toLongOrNull() ?: 0L
+                BuyRequestEntity(
+                    id = id,
+                    offerListingId = (data["offerListingId"] as? Long) ?: 0L,
+                    medicineName = (data["medicineName"] as? String) ?: "",
+                    requestedQuantity = (data["requestedQuantity"] as? Long)?.toInt() ?: ((data["requestedQuantity"] as? Int) ?: 1),
+                    unitPrice = (data["unitPrice"] as? Double) ?: ((data["unitPrice"] as? Long)?.toDouble() ?: 0.0),
+                    totalPrice = (data["totalPrice"] as? Double) ?: ((data["totalPrice"] as? Long)?.toDouble() ?: 0.0),
+                    buyerShopId = (data["buyerShopId"] as? Long) ?: 1L,
+                    buyerShopName = (data["buyerShopName"] as? String) ?: "Pharmacist Shop",
+                    buyerPhone = (data["buyerPhone"] as? String) ?: "01700000000",
+                    sellerShopId = (data["sellerShopId"] as? Long) ?: 1L,
+                    sellerShopName = (data["sellerShopName"] as? String) ?: "Pharma Supplier",
+                    sellerPhone = (data["sellerPhone"] as? String) ?: "01800000000",
+                    note = (data["note"] as? String) ?: "",
+                    status = (data["status"] as? String) ?: "PENDING",
+                    timestamp = (data["timestamp"] as? Long) ?: System.currentTimeMillis()
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error fetching order history from Firestore: ${e.message}")
+            emptyList()
         }
     }
 

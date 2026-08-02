@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -102,11 +103,14 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
+  val context = LocalContext.current
   val currentTab by viewModel.currentTab.collectAsStateWithLifecycle()
   val activeShop by viewModel.activeShop.collectAsStateWithLifecycle()
   val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
   val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
   val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
+  val marketplaceSort by viewModel.marketplaceSort.collectAsStateWithLifecycle()
+  val marketplaceFilter by viewModel.marketplaceFilter.collectAsStateWithLifecycle()
   val filteredOffers by viewModel.filteredOffers.collectAsStateWithLifecycle()
   val catalogGroupedOffers by viewModel.catalogGroupedOffers.collectAsStateWithLifecycle()
   val comparisonMedicineName by viewModel.comparisonMedicineName.collectAsStateWithLifecycle()
@@ -136,6 +140,8 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
   val editingOffer by viewModel.editingOffer.collectAsStateWithLifecycle()
   val snackbarMessage by viewModel.snackbarMessage.collectAsStateWithLifecycle()
   val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+  val aiSuggestions by viewModel.aiSuggestions.collectAsStateWithLifecycle()
+  val isGeneratingAiSuggestions by viewModel.isGeneratingAiSuggestions.collectAsStateWithLifecycle()
 
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -310,6 +316,10 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
             onFilterSelected = { viewModel.setQuickFilter(it) },
             selectedCategory = selectedCategory,
             onCategorySelected = { viewModel.setSelectedCategory(it) },
+            activeSort = marketplaceSort,
+            onSortSelected = { viewModel.setMarketplaceSort(it) },
+            activeFilter = marketplaceFilter,
+            onFilterChanged = { viewModel.setMarketplaceFilter(it) },
             onResetFilters = { viewModel.resetFilters() },
             offersList = filteredOffers,
             groupedCatalog = catalogGroupedOffers,
@@ -329,6 +339,15 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
             onCompareClick = { medName -> viewModel.openComparison(medName) },
             onOpenCartClick = { viewModel.setTab(1) },
             onPostBulkRequestClick = { viewModel.openBulkRequestDialog() },
+            aiSuggestions = aiSuggestions,
+            isGeneratingAiSuggestions = isGeneratingAiSuggestions,
+            onRefreshAiSuggestions = { viewModel.loadGeminiAiSuggestions() },
+            onAddToCartFromAiMatch = { offerId ->
+              val matchOffer = filteredOffers.find { it.id == offerId }
+              if (matchOffer != null) {
+                viewModel.addToCart(matchOffer, 1)
+              }
+            },
             isRefreshing = isRefreshing,
             onRefresh = { viewModel.refreshPriceLists() }
           )
@@ -336,24 +355,35 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
           1 -> CartScreen(
             cartItems = cartItems,
             totalPrice = cartTotalPrice,
+            buyRequests = buyRequests,
+            activeShopName = activeShop?.shopName ?: "My Pharmacy",
             onUpdateQuantity = { id, qty -> viewModel.updateCartQuantity(id, qty) },
             onDeleteItem = { id -> viewModel.deleteCartItem(id) },
-            onCheckout = { note -> viewModel.checkoutCart(note) }
+            onCheckout = { note -> viewModel.checkoutCart(note) },
+            onUpdateOrderStatus = { id, status -> viewModel.updateRequestStatus(id, status) },
+            onRefreshFirestoreOrders = { viewModel.refreshOrderHistoryFromFirestore() },
+            onReorderClick = { req -> viewModel.reorderPreviousRequest(req) }
           )
 
           2 -> SellerDashboardScreen(
             activeShop = activeShop,
             sellerOffers = sellerInventory,
+            masterMedicines = masterMedicines,
             onAddOfferClick = { viewModel.openAddOfferDialog(null) },
             onEditOfferClick = { offer -> viewModel.openAddOfferDialog(offer) },
             onTogglePauseClick = { offer -> viewModel.togglePauseOffer(offer) },
             onMarkSoldClick = { offer -> viewModel.markOfferSoldOut(offer) },
             onDeleteClick = { offer -> viewModel.deleteOffer(offer) },
+            onQuickRestockClick = { offer, addQty -> viewModel.quickRestockOffer(offer, addQty) },
+            onUpdateLowStockThreshold = { offer, newThresh -> viewModel.updateOfferLowStockThreshold(offer, newThresh) },
             sellerAuthState = sellerAuthState,
             buyRequests = buyRequests,
             onUpdateStatus = { requestId, status -> viewModel.updateRequestStatus(requestId, status) },
+            onBulkUpdateStatus = { requestIds, status -> viewModel.updateMultipleOrderStatuses(requestIds, status) },
             onOpenAuthClick = { viewModel.openAuthScreen() },
-            onPostBulkRequestClick = { viewModel.openBulkRequestDialog() }
+            onPostBulkRequestClick = { viewModel.openBulkRequestDialog() },
+            onExportCsvClick = { viewModel.exportInventoryCsv(context) },
+            onRefreshFirestoreOrders = { viewModel.refreshOrderHistoryFromFirestore() }
           )
 
           3 -> InAppChatScreen(
@@ -413,9 +443,9 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
           masterMedicines = masterMedicines,
           offerToEdit = editingOffer,
           onDismiss = { viewModel.closeAddOfferDialog() },
-          onSave = { medName, generic, str, comp, form, pack, batch, exp, days, qty, mrp, offerVal, moq, notes ->
+          onSave = { medName, generic, str, comp, form, pack, batch, exp, days, qty, threshold, mrp, offerVal, moq, notes ->
             viewModel.saveOfferListing(
-              medName, generic, str, comp, form, pack, batch, exp, days, qty, mrp, offerVal, moq, notes
+              medName, generic, str, comp, form, pack, batch, exp, days, qty, threshold, mrp, offerVal, moq, notes
             )
           }
         )
