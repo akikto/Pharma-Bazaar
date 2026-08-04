@@ -47,6 +47,7 @@ import com.example.ui.screens.AddEditOfferDialog
 import com.example.ui.screens.BulkMedicineRequestDialog
 import com.example.ui.screens.BuyRequestDialog
 import com.example.ui.screens.CartScreen
+import com.example.ui.screens.FirestoreProductsScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.InAppChatScreen
 import com.example.ui.screens.MultiSellerComparisonScreen
@@ -136,6 +137,13 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
 
   val showAuthScreen by viewModel.showAuthScreen.collectAsStateWithLifecycle()
   val sellerAuthState by viewModel.sellerAuthState.collectAsStateWithLifecycle()
+
+  val showFirestoreProductsScreen by viewModel.showFirestoreProductsScreen.collectAsStateWithLifecycle()
+  val firestoreProducts by viewModel.filteredFirestoreProducts.collectAsStateWithLifecycle()
+  val isFirestoreLoading by viewModel.isFirestoreLoading.collectAsStateWithLifecycle()
+  val firestoreSearchQuery by viewModel.firestoreSearchQuery.collectAsStateWithLifecycle()
+  val firestoreSortOption by viewModel.firestoreSortOption.collectAsStateWithLifecycle()
+  val firestoreCategoryFilter by viewModel.firestoreCategoryFilter.collectAsStateWithLifecycle()
 
   val buyRequestDialogOffer by viewModel.buyRequestDialogOffer.collectAsStateWithLifecycle()
   val addEditOfferDialogShow by viewModel.addEditOfferDialogShow.collectAsStateWithLifecycle()
@@ -272,6 +280,37 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
           onClearError = { viewModel.clearAuthError() },
           onBackClick = { viewModel.closeAuthScreen() }
         )
+      } else if (showFirestoreProductsScreen) {
+        FirestoreProductsScreen(
+          products = firestoreProducts,
+          isLoading = isFirestoreLoading,
+          searchQuery = firestoreSearchQuery,
+          onSearchQueryChange = { viewModel.setFirestoreSearchQuery(it) },
+          selectedCategory = firestoreCategoryFilter,
+          onCategorySelect = { viewModel.setFirestoreCategoryFilter(it) },
+          selectedSort = firestoreSortOption,
+          onSortSelect = { viewModel.setFirestoreSortOption(it) },
+          onRefresh = { viewModel.loadFirestoreProducts() },
+          onBackClick = { viewModel.closeFirestoreProductsScreen() },
+          onBuyClick = { offer -> viewModel.showBuyRequestDialog(offer) },
+          onToggleWatchlist = { id ->
+            val offer = firestoreProducts.find { it.id == id }
+            if (offer != null) {
+              viewModel.toggleWatchlist(offer.medicineName, offer.genericName, offer.companyName, offer.form)
+            }
+          },
+          watchlistIds = firestoreProducts.filter { watchlistedMedicineNames.contains(it.medicineName) }.map { it.id },
+          onOpenChat = { offer ->
+            val req = buyRequests.find { it.offerListingId == offer.id }
+            if (req != null) {
+              viewModel.openChat(req)
+              viewModel.setTab(3)
+              viewModel.closeFirestoreProductsScreen()
+            } else {
+              viewModel.showBuyRequestDialog(offer)
+            }
+          }
+        )
       } else if (showWatchlistScreen) {
         WatchlistScreen(
           watchlistItems = watchlistItems,
@@ -352,6 +391,7 @@ fun PharmaBazaarApp(viewModel: PharmaViewModel = viewModel()) {
               viewModel.toggleWatchlist(med, gen, comp, form)
             },
             onOpenWatchlistClick = { viewModel.openWatchlistScreen() },
+            onOpenFirestoreCatalogClick = { viewModel.openFirestoreProductsScreen() },
             onOpenSearchScreenClick = { viewModel.openSearchScreen() },
             onBuyRequestClick = { offer -> viewModel.showBuyRequestDialog(offer) },
             onChatClick = { offer ->

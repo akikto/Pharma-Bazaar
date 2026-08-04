@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Compare
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -114,6 +115,7 @@ fun HomeScreen(
     watchlistedNames: Set<String> = emptySet(),
     onToggleWatchlist: ((String, String, String, String) -> Unit)? = null,
     onOpenWatchlistClick: () -> Unit = {},
+    onOpenFirestoreCatalogClick: () -> Unit = {},
     onOpenSearchScreenClick: () -> Unit = {},
     onBuyRequestClick: (OfferListingEntity) -> Unit,
     onChatClick: (OfferListingEntity) -> Unit,
@@ -246,6 +248,17 @@ fun HomeScreen(
                                     tint = TextSecondary
                                 )
                             }
+                        }
+
+                        IconButton(
+                            onClick = onOpenFirestoreCatalogClick,
+                            modifier = Modifier.testTag("nav_firestore_catalog_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.CloudSync,
+                                contentDescription = "Firestore Catalog",
+                                tint = RoyalPharmaBlue
+                            )
                         }
 
                         IconButton(onClick = {}) {
