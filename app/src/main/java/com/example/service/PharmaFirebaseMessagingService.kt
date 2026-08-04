@@ -15,25 +15,46 @@ class PharmaFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
-        Log.d(TAG, "From: ${remoteMessage.from}")
+        Log.d(TAG, "FCM Message received from: ${remoteMessage.from}")
 
         val data = remoteMessage.data
-        val orderId = data["order_id"]?.toLongOrNull() ?: 0L
-        val medicineName = data["medicine_name"] ?: "ওষুধের অর্ডার"
-        val status = data["status"] ?: "DISPATCHED"
-        val sellerName = data["seller_name"] ?: "মেডিসিন সাপ্লায়ার"
-        val customBody = remoteMessage.notification?.body ?: data["message"]
+        val messageType = data["type"] ?: if (data.containsKey("request_id")) "NEW_MEDICINE_REQUEST" else "ORDER_STATUS_UPDATE"
 
-        Log.d(TAG, "Received FCM Push payload for Order ID: $orderId Status: $status")
+        if (messageType == "NEW_MEDICINE_REQUEST") {
+            val requestId = data["request_id"]?.toLongOrNull() ?: System.currentTimeMillis()
+            val medicineName = data["medicine_name"] ?: remoteMessage.notification?.title ?: "নতুন ওষুধের রিকোয়েস্ট"
+            val quantity = data["quantity"]?.toIntOrNull() ?: 10
+            val buyerPharmacy = data["buyer_pharmacy"] ?: "ফার্মেসী কাস্টমার"
+            val targetPrice = data["target_price"]?.toDoubleOrNull()
 
-        PharmaNotificationHelper.showOrderStatusNotification(
-            context = applicationContext,
-            orderId = orderId,
-            medicineName = medicineName,
-            newStatus = status,
-            sellerShopName = sellerName,
-            customMessage = customBody
-        )
+            Log.d(TAG, "Received FCM Push payload for New Medicine Request: $medicineName from $buyerPharmacy")
+
+            PharmaNotificationHelper.showNewMedicineRequestNotificationForSupplier(
+                context = applicationContext,
+                requestId = requestId,
+                medicineName = medicineName,
+                quantity = quantity,
+                buyerPharmacyName = buyerPharmacy,
+                targetPrice = targetPrice
+            )
+        } else {
+            val orderId = data["order_id"]?.toLongOrNull() ?: 0L
+            val medicineName = data["medicine_name"] ?: "ওষুধের অর্ডার"
+            val status = data["status"] ?: "DISPATCHED"
+            val sellerName = data["seller_name"] ?: "মেডিসিন সাপ্লায়ার"
+            val customBody = remoteMessage.notification?.body ?: data["message"]
+
+            Log.d(TAG, "Received FCM Push payload for Order ID: $orderId Status: $status")
+
+            PharmaNotificationHelper.showOrderStatusNotification(
+                context = applicationContext,
+                orderId = orderId,
+                medicineName = medicineName,
+                newStatus = status,
+                sellerShopName = sellerName,
+                customMessage = customBody
+            )
+        }
     }
 
     companion object {

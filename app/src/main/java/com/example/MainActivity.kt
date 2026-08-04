@@ -82,8 +82,10 @@ class MainActivity : ComponentActivity() {
       }
     }
 
-    // Fetch FCM Registration Token
+    // Fetch FCM Registration Token & Subscribe to Topics
     try {
+      FirebaseMessaging.getInstance().subscribeToTopic("suppliers")
+      FirebaseMessaging.getInstance().subscribeToTopic("orders")
       FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
         if (task.isSuccessful) {
           val fcmToken = task.result

@@ -222,7 +222,7 @@ class PharmaRepository(
         return reqId
     }
 
-    suspend fun submitBuyRequestsFromCart(buyerShop: ShopProfileEntity, note: String = "") {
+    suspend fun submitBuyRequestsFromCart(buyerShop: ShopProfileEntity, note: String = "", context: Context? = null) {
         val items = pharmaDao.getCartItems().first()
         if (items.isEmpty()) return
 
@@ -252,6 +252,17 @@ class PharmaRepository(
                 )
                 val reqId = pharmaDao.insertBuyRequest(req)
                 firestoreService.savePharmacyRequest(req.copy(id = reqId))
+
+                context?.let { ctx ->
+                    PharmaNotificationHelper.showNewMedicineRequestNotificationForSupplier(
+                        context = ctx,
+                        requestId = reqId,
+                        medicineName = item.medicineName,
+                        quantity = item.requestedQuantity,
+                        buyerPharmacyName = buyerShop.shopName,
+                        targetPrice = item.offerPrice
+                    )
+                }
 
                 // Add initial chat message
                 pharmaDao.insertChatMessage(

@@ -841,7 +841,18 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 status = "PENDING",
                 timestamp = System.currentTimeMillis()
             )
-            repository.insertSingleBuyRequest(req)
+            val reqId = repository.insertSingleBuyRequest(req)
+
+            val ctx = getApplication<Application>()
+            // Trigger FCM Real-Time Push Notification to Suppliers
+            PharmaNotificationHelper.showNewMedicineRequestNotificationForSupplier(
+                context = ctx,
+                requestId = reqId,
+                medicineName = req.medicineName,
+                quantity = req.requestedQuantity,
+                buyerPharmacyName = req.buyerShopName,
+                targetPrice = req.unitPrice
+            )
 
             if (newAvailableQty <= offer.lowStockThreshold) {
                 val ctx = getApplication<Application>()
@@ -861,7 +872,8 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
 
     fun checkoutCart(note: String) {
         viewModelScope.launch {
-            repository.submitBuyRequestsFromCart(_activeShop.value, note)
+            val ctx = getApplication<Application>()
+            repository.submitBuyRequestsFromCart(_activeShop.value, note, ctx)
             showSnackbar("🎉 কার্টের সব পণ্যের বাই রিকোয়েস্ট পাঠানো হয়েছে!")
         }
     }
@@ -942,6 +954,17 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                 status = "ACTIVE"
             )
             repository.insertOffer(newOffer)
+
+            val ctx = getApplication<Application>()
+            PharmaNotificationHelper.showNewMedicineRequestNotificationForSupplier(
+                context = ctx,
+                requestId = System.currentTimeMillis(),
+                medicineName = request.medicineName,
+                quantity = request.requestedQuantity,
+                buyerPharmacyName = sellerName,
+                targetPrice = request.targetUnitPrice
+            )
+
             closeBulkRequestDialog()
             showSnackbar("📦 ${request.requestedQuantity} বক্স ${request.medicineName}-এর বাল্ক চাহিদা পোস্ট করা হয়েছে!")
         }

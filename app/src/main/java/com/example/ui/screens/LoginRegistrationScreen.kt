@@ -5,7 +5,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.res.painterResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -335,11 +338,10 @@ fun LoginRegistrationScreen(
                             modifier = Modifier.size(56.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Outlined.LocalPharmacy,
-                                    contentDescription = "PharmaBazaar",
-                                    tint = RoyalPharmaBlue,
-                                    modifier = Modifier.size(32.dp)
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_pharma_logo),
+                                    contentDescription = "Pharma-Exchange Logo",
+                                    modifier = Modifier.size(56.dp)
                                 )
                             }
                         }

@@ -145,4 +145,45 @@ object PharmaNotificationHelper {
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify((System.currentTimeMillis() % 100000).toInt(), builder.build())
     }
+
+    fun showNewMedicineRequestNotificationForSupplier(
+        context: Context,
+        requestId: Long,
+        medicineName: String,
+        quantity: Int,
+        buyerPharmacyName: String,
+        targetPrice: Double? = null
+    ) {
+        createNotificationChannel(context)
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("target_screen", "seller_dashboard")
+            putExtra("request_id", requestId)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            (requestId % 10000).toInt(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val title = "🔔 নতুন ওষুধের রিকোয়েস্ট এসেছে! ($medicineName)"
+        val priceText = if (targetPrice != null && targetPrice > 0) " (অফার প্রাইস: ৳${targetPrice.toInt()})" else ""
+        val body = "$buyerPharmacyName থেকে $medicineName-এর $quantity বক্সে নতুন রিকোয়েস্ট পোস্ট হয়েছে$priceText। ক্লিক করে অফার জমা দিন।"
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_notify_chat)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify((System.currentTimeMillis() % 100000).toInt(), builder.build())
+    }
 }
