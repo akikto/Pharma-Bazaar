@@ -43,7 +43,7 @@ abstract class PharmaDatabase : RoomDatabase() {
                     context.applicationContext,
                     PharmaDatabase::class.java,
                     "pharma_bazaar_db"
-                ).fallbackToDestructiveMigration().build()
+                ).fallbackToDestructiveMigration(true).build()
                 INSTANCE = instance
                 instance
             }
