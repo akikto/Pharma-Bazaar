@@ -107,7 +107,11 @@ data class ShopProfileEntity(
     val area: String,
     val rating: Double,
     val totalDealsCompleted: Int,
-    val isVerified: Boolean = true
+    val isVerified: Boolean = true,
+    // Firebase Auth uid of the account that owns this shop. Empty for the
+    // pre-seeded demo shops. Set on real registration so Firestore rules
+    // can verify who is allowed to act on this shop's behalf.
+    val ownerUid: String = ""
 )
 
 @Entity(tableName = "watchlist_items")

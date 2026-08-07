@@ -1,0 +1,48 @@
+name: Build Debug APK
+
+# Lets you build an installable APK entirely from GitHub (no Android Studio
+# needed). Push to main, or trigger manually from the Actions tab, then
+# download the APK from the finished run's "Artifacts" section on your phone.
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required SDK platform & build-tools
+        run: |
+          sdkmanager --install "platforms;android-36" "build-tools;36.0.0" || true
+
+      # This project has no committed Gradle wrapper (gradlew), so we let
+      # this action provision Gradle directly. If the build fails with a
+      # "gradle version incompatible with AGP" style error, bump
+      # gradle-version below (check gradle/libs.versions.toml -> agp entry
+      # to find the matching Gradle version required by that AGP release).
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11"
+
+      - name: Build debug APK
+        run: gradle assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pharma-bazaar-debug-apk
+          path: app/build/outputs/apk/debug/*.apk

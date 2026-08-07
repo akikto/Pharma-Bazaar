@@ -27,7 +27,7 @@ import com.example.data.db.entities.WatchlistItemEntity
         PriceThresholdAlertEntity::class,
         TriggeredPriceAlertEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class PharmaDatabase : RoomDatabase() {

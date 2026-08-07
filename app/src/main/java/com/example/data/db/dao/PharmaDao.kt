@@ -113,8 +113,14 @@ interface PharmaDao {
     @Query("SELECT * FROM shop_profiles WHERE id = :shopId")
     suspend fun getShopById(shopId: Long): ShopProfileEntity?
 
+    @Query("SELECT * FROM shop_profiles WHERE ownerUid = :ownerUid LIMIT 1")
+    suspend fun getShopByOwnerUid(ownerUid: String): ShopProfileEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertShops(shops: List<ShopProfileEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertShop(shop: ShopProfileEntity)
 
     // Watchlist / Favorites
     @Query("SELECT * FROM watchlist_items ORDER BY addedAt DESC")

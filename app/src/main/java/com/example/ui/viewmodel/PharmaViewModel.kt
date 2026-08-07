@@ -15,6 +15,7 @@ import com.example.data.db.entities.PriceThresholdAlertEntity
 import com.example.data.db.entities.ShopProfileEntity
 import com.example.data.db.entities.TriggeredPriceAlertEntity
 import com.example.data.db.entities.WatchlistItemEntity
+import com.example.data.remote.FirestoreService
 import com.example.data.repository.PharmaRepository
 import com.example.service.AiMatchSuggestion
 import com.example.util.InventoryCsvExportUtil
@@ -251,6 +252,7 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
 
     // Seller Auth State
     private var firebaseAuth: FirebaseAuth? = runCatching { FirebaseAuth.getInstance() }.getOrNull()
+    private val firestoreService = FirestoreService()
 
     private val _showAuthScreen = MutableStateFlow(false)
     val showAuthScreen: StateFlow<Boolean> = _showAuthScreen.asStateFlow()
@@ -386,6 +388,7 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                         authMethod = "Firebase Email/Password",
                         isLoading = false
                     )
+                    user?.uid?.let { restoreShopProfileForUid(it) }
                     _snackbarMessage.value = "ফায়ারবেস সাইন-ইন সফল হয়েছে!"
                     _showAuthScreen.value = false
                 }
@@ -416,6 +419,45 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    /** Called after a REAL Firebase Auth registration succeeds. Mints a
+     *  globally-unique shop id (a Room autoincrement id restarts at 1 on
+     *  every device, so it can't be trusted as a global marketplace id),
+     *  links it to the signed-in uid, and persists it both locally and to
+     *  Firestore (`shops/{id}`) so requests/listings created under this
+     *  shop can be ownership-verified later. */
+    private fun registerRealShopProfile(uid: String, shopName: String, license: String, phone: String) {
+        val newShop = _activeShop.value.copy(
+            id = System.currentTimeMillis(),
+            shopName = if (shopName.isNotBlank()) shopName else _activeShop.value.shopName,
+            licenseNumber = if (license.isNotBlank()) license else _activeShop.value.licenseNumber,
+            phone = if (phone.isNotBlank()) phone else _activeShop.value.phone,
+            ownerUid = uid
+        )
+        _activeShop.value = newShop
+        viewModelScope.launch {
+            repository.saveShopLocally(newShop)
+            firestoreService.saveShopProfile(newShop)
+        }
+    }
+
+    /** Called after a REAL Firebase Auth sign-in succeeds. Restores this
+     *  user's own shop profile (local first, then Firestore) instead of
+     *  leaving the hardcoded demo shop ("সেবা ফার্মেসী", id=1) active. */
+    private fun restoreShopProfileForUid(uid: String) {
+        viewModelScope.launch {
+            val localShop = repository.getShopByOwnerUid(uid)
+            if (localShop != null) {
+                _activeShop.value = localShop
+                return@launch
+            }
+            val remoteShop = firestoreService.fetchShopProfileByOwnerUid(uid)
+            if (remoteShop != null) {
+                _activeShop.value = remoteShop
+                repository.saveShopLocally(remoteShop)
+            }
+        }
+    }
+
     fun registerPharmacySeller(email: String, pass: String, shopName: String, license: String, phone: String) {
         if (email.isBlank() || pass.length < 6) {
             _sellerAuthState.value = _sellerAuthState.value.copy(errorMessage = "সঠিক ইমেইল এবং অন্তত ৬ ডিজিটের পাসওয়ার্ড দিন।")
@@ -437,7 +479,9 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                         authMethod = "Firebase Auth (Registered)",
                         isLoading = false
                     )
-                    if (shopName.isNotBlank()) {
+                    if (user?.uid != null) {
+                        registerRealShopProfile(user.uid, shopName, license, phone)
+                    } else if (shopName.isNotBlank()) {
                         _activeShop.value = _activeShop.value.copy(
                             shopName = shopName,
                             licenseNumber = if (license.isNotBlank()) license else _activeShop.value.licenseNumber,
@@ -523,6 +567,7 @@ class PharmaViewModel(application: Application) : AndroidViewModel(application) 
                                     authMethod = "Google Sign-In (Credential Manager)",
                                     isLoading = false
                                 )
+                                user?.uid?.let { restoreShopProfileForUid(it) }
                                 _snackbarMessage.value = "Google দিয়ে সাইন-ইন সফল হয়েছে!"
                                 _showAuthScreen.value = false
                             }

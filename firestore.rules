@@ -1,0 +1,85 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Inventory Listings ──────────────────────────────────────────────
+    // Any signed-in pharmacy can read listings (this is a public marketplace).
+    // FirestoreService.kt now stamps "ownerUid" = the seller's Firebase Auth
+    // uid on every write, so create/update/delete are restricted to the
+    // listing's owner.
+    match /inventory_listings/{listingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidListing(request.resource.data)
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isSignedIn()
+        && isValidListing(request.resource.data)
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ── Pharmacy Buy Requests ────────────────────────────────────────────
+    // FirestoreService.kt stamps "buyerUid" on create, so buyers can only
+    // create/delete their own requests. Status updates (accept/reject/ship)
+    // are made by the SELLER side — verified here via the "shops" collection,
+    // which maps a shop's Firestore doc id (== sellerShopId) to its owner's
+    // Firebase Auth uid.
+    match /pharmacy_requests/{requestId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidRequest(request.resource.data)
+        && request.resource.data.buyerUid == request.auth.uid;
+      allow update: if isSignedIn()
+        && isValidRequest(request.resource.data)
+        && request.resource.data.buyerUid == resource.data.buyerUid
+        && request.resource.data.sellerShopId == resource.data.sellerShopId
+        && (
+          resource.data.buyerUid == request.auth.uid
+          || isShopOwner(resource.data.sellerShopId)
+        );
+      allow delete: if isSignedIn() && resource.data.buyerUid == request.auth.uid;
+    }
+
+    // ── Shops ────────────────────────────────────────────────────────────
+    // Document id == the shop's globally-unique Long id (sellerShopId /
+    // buyerShopId elsewhere). Anyone signed-in can read shop profiles
+    // (needed to show seller info in the marketplace); only the account
+    // that owns a shop (ownerUid) can create/update/delete it.
+    match /shops/{shopId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidListing(data) {
+      return data.keys().hasAll(['id', 'medicineName', 'sellerShopId', 'offerPrice', 'availableQuantity'])
+        && data.offerPrice is number && data.offerPrice >= 0
+        && data.availableQuantity is number && data.availableQuantity >= 0;
+    }
+
+    function isValidRequest(data) {
+      return data.keys().hasAll(['id', 'medicineName', 'buyerShopId', 'sellerShopId', 'requestedQuantity'])
+        && data.requestedQuantity is number && data.requestedQuantity > 0;
+    }
+
+    function isShopOwner(shopId) {
+      return exists(/databases/$(database)/documents/shops/$(string(shopId)))
+        && get(/databases/$(database)/documents/shops/$(string(shopId))).data.ownerUid == request.auth.uid;
+    }
+  }
+}

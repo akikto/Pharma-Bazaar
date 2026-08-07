@@ -3,7 +3,9 @@ package com.example.data.remote
 import android.util.Log
 import com.example.data.db.entities.BuyRequestEntity
 import com.example.data.db.entities.OfferListingEntity
+import com.example.data.db.entities.ShopProfileEntity
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
@@ -22,10 +24,88 @@ class FirestoreService {
         }
     }
 
+    /**
+     * Firebase Auth uid of the currently signed-in user, or null if signed out.
+     * Written onto every document this service creates so Firestore security
+     * rules can verify ownership (see firestore.rules).
+     */
+    private fun currentUid(): String? = try {
+        FirebaseAuth.getInstance().currentUser?.uid
+    } catch (e: Throwable) {
+        null
+    }
+
     companion object {
         private const val TAG = "FirestoreService"
         const val COLLECTION_INVENTORY_LISTINGS = "inventory_listings"
         const val COLLECTION_PHARMACY_REQUESTS = "pharmacy_requests"
+        const val COLLECTION_SHOPS = "shops"
+    }
+
+    /**
+     * Stores or updates a Shop Profile in Cloud Firestore, keyed by the
+     * shop's local Long id (which becomes globally unique because it's
+     * minted from System.currentTimeMillis() at registration time — see
+     * PharmaViewModel.registerPharmacySeller).
+     */
+    suspend fun saveShopProfile(shop: ShopProfileEntity): Boolean {
+        val db = getFirestore() ?: return false
+        return try {
+            val data = hashMapOf(
+                "id" to shop.id,
+                "shopName" to shop.shopName,
+                "ownerName" to shop.ownerName,
+                "licenseNumber" to shop.licenseNumber,
+                "phone" to shop.phone,
+                "address" to shop.address,
+                "area" to shop.area,
+                "rating" to shop.rating,
+                "totalDealsCompleted" to shop.totalDealsCompleted,
+                "isVerified" to shop.isVerified,
+                "ownerUid" to shop.ownerUid
+            )
+            db.collection(COLLECTION_SHOPS).document(shop.id.toString())
+                .set(data, SetOptions.merge()).await()
+            Log.d(TAG, "Successfully saved shop profile ${shop.id} to Firestore")
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to save shop profile ${shop.id} to Firestore: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Looks up the shop profile owned by the given Firebase Auth uid, if any.
+     * Used at login to restore the signed-in seller's real shop instead of
+     * the hardcoded demo shop.
+     */
+    suspend fun fetchShopProfileByOwnerUid(uid: String): ShopProfileEntity? {
+        val db = getFirestore() ?: return null
+        return try {
+            val snapshot = db.collection(COLLECTION_SHOPS)
+                .whereEqualTo("ownerUid", uid)
+                .limit(1)
+                .get()
+                .await()
+            val doc = snapshot.documents.firstOrNull() ?: return null
+            val data = doc.data ?: return null
+            ShopProfileEntity(
+                id = (data["id"] as? Long) ?: doc.id.toLongOrNull() ?: 0L,
+                shopName = (data["shopName"] as? String) ?: "",
+                ownerName = (data["ownerName"] as? String) ?: "",
+                licenseNumber = (data["licenseNumber"] as? String) ?: "",
+                phone = (data["phone"] as? String) ?: "",
+                address = (data["address"] as? String) ?: "",
+                area = (data["area"] as? String) ?: "",
+                rating = (data["rating"] as? Double) ?: ((data["rating"] as? Long)?.toDouble() ?: 5.0),
+                totalDealsCompleted = (data["totalDealsCompleted"] as? Long)?.toInt() ?: 0,
+                isVerified = (data["isVerified"] as? Boolean) ?: true,
+                ownerUid = (data["ownerUid"] as? String) ?: uid
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to fetch shop profile for uid $uid: ${e.message}")
+            null
+        }
     }
 
     /**
@@ -60,7 +140,8 @@ class FirestoreService {
                 "notes" to offer.notes,
                 "status" to offer.status,
                 "createdAt" to offer.createdAt,
-                "updatedAt" to System.currentTimeMillis()
+                "updatedAt" to System.currentTimeMillis(),
+                "ownerUid" to currentUid()
             )
             docRef.set(data, SetOptions.merge()).await()
             Log.d(TAG, "Successfully saved inventory listing ${offer.id} to Firestore")
@@ -134,7 +215,8 @@ class FirestoreService {
                 "note" to request.note,
                 "status" to request.status,
                 "timestamp" to request.timestamp,
-                "syncedAt" to System.currentTimeMillis()
+                "syncedAt" to System.currentTimeMillis(),
+                "buyerUid" to currentUid()
             )
             docRef.set(data, SetOptions.merge()).await()
             Log.d(TAG, "Successfully saved pharmacy request ${request.id} to Firestore")

@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "inventory_listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "offerPrice", "order": "ASCENDING" },
+        { "fieldPath": "expiryDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "daysUntilExpiry", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

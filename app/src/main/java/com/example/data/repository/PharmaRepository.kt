@@ -28,6 +28,12 @@ class PharmaRepository(
     val cartItems: Flow<List<CartItemEntity>> = pharmaDao.getCartItems()
     val buyRequests: Flow<List<BuyRequestEntity>> = pharmaDao.getAllBuyRequests()
     val shopProfiles: Flow<List<ShopProfileEntity>> = pharmaDao.getAllShops()
+
+    suspend fun saveShopLocally(shop: ShopProfileEntity) = pharmaDao.insertShop(shop)
+
+    suspend fun getShopByOwnerUid(ownerUid: String): ShopProfileEntity? =
+        pharmaDao.getShopByOwnerUid(ownerUid)
+
     val watchlistItems: Flow<List<WatchlistItemEntity>> = pharmaDao.getWatchlistItems()
     val priceThresholdAlerts: Flow<List<PriceThresholdAlertEntity>> = pharmaDao.getPriceThresholdAlerts()
     val triggeredPriceAlerts: Flow<List<TriggeredPriceAlertEntity>> = pharmaDao.getTriggeredPriceAlerts()
